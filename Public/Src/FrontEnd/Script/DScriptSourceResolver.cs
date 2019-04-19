@@ -66,21 +66,6 @@ namespace BuildXL.FrontEnd.Script
         /// </summary>
         protected HashSet<ModuleId> m_owningModules;
 
-        /// <summary>
-<<<<<<< HEAD
-        /// Mappings package directories to lists of packages.
-        /// </summary>
-        /// <remarks>
-        /// We allow multiple packages in a single directory, and hence the list of packages. Moreover, by construction, the packages in the same list
-        /// must reside in the same directory.
-        /// </remarks>
-        protected ConcurrentDictionary<AbsolutePath, List<Package>> m_packageDirectories = new ConcurrentDictionary<AbsolutePath, List<Package>>();
-=======
-        /// Workspace factory that are used for the parsing part of this resolver
-        /// </summary>
-        protected readonly DScriptWorkspaceResolverFactory WorkspaceFactory;
->>>>>>> 65acb10... Remove unused member
-
         private readonly SourceFileProcessingQueue<bool> m_parseQueue;
 
         private readonly IDecorator<Values.EvaluationResult> m_evaluationDecorator;
