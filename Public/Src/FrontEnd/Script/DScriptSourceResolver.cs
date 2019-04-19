@@ -67,6 +67,7 @@ namespace BuildXL.FrontEnd.Script
         protected HashSet<ModuleId> m_owningModules;
 
         /// <summary>
+<<<<<<< HEAD
         /// Mappings package directories to lists of packages.
         /// </summary>
         /// <remarks>
@@ -74,6 +75,11 @@ namespace BuildXL.FrontEnd.Script
         /// must reside in the same directory.
         /// </remarks>
         protected ConcurrentDictionary<AbsolutePath, List<Package>> m_packageDirectories = new ConcurrentDictionary<AbsolutePath, List<Package>>();
+=======
+        /// Workspace factory that are used for the parsing part of this resolver
+        /// </summary>
+        protected readonly DScriptWorkspaceResolverFactory WorkspaceFactory;
+>>>>>>> 65acb10... Remove unused member
 
         private readonly SourceFileProcessingQueue<bool> m_parseQueue;
 
@@ -124,7 +130,6 @@ namespace BuildXL.FrontEnd.Script
                 return false;
             }
 
-            m_packageDirectories = moduleResolutionResult.PackageDirectories;
             m_packages = moduleResolutionResult.Packages;
 
             m_owningModules = moduleResolutionResult.Packages.ToDictionary(p => p.Value.ModuleId, p => p.Value);
