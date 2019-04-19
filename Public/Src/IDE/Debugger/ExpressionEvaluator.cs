@@ -73,12 +73,12 @@ namespace BuildXL.FrontEnd.Script.Debugger
                     context.FrontEndHost,
                     context.FrontEndContext,
                     m_logger,
-                    context.Package);
+                    context.Module);
 
             // We recreate the local scope so the expression is parsed using the same local variables indexes
             // than the context where it is going to be evaluated
             var localScope = BuildLocalScopeForLocalVars(context, evalState.GetStackEntryForFrame(frameContext.FrameIndex));
-            var expression = s_parser.ParseExpression(runtimeModelContext, context.Package.Path, expressionString, localScope, useSemanticNameResolution: false);
+            var expression = s_parser.ParseExpression(runtimeModelContext, context.Module.ModuleConfigFile, expressionString, localScope, useSemanticNameResolution: false);
 
             // If parsing failed, we report it and return
             // VS code only displays the first error that is sent. So we only send the first one.

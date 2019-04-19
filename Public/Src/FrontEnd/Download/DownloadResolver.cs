@@ -111,8 +111,6 @@ namespace BuildXL.FrontEnd.Download
 
             var downloadData = m_workspaceResolver.Downloads[module.Descriptor.Name];
 
-            var package = CreatePackage(module.Definition);
-
             Contract.Assert(module.Specs.Count == 1, "This resolver generated the module, so we expect a single spec.");
             var sourceKv = module.Specs.First();
 
@@ -122,7 +120,7 @@ namespace BuildXL.FrontEnd.Download
             var currentFileModule = ModuleLiteral.CreateFileModule(
                 sourceFilePath,
                 moduleRegistry,
-                package,
+                module.Definition,
                 sourceFile.LineMap);
 
             // Download
@@ -716,24 +714,6 @@ namespace BuildXL.FrontEnd.Download
             }
         }
         #endregion
-
-        private Package CreatePackage(ModuleDefinition moduleDefinition)
-        {
-            var moduleDescriptor = moduleDefinition.Descriptor;
-
-            var packageId = PackageId.Create(StringId.Create(m_context.StringTable, moduleDescriptor.Name));
-            var packageDescriptor = new PackageDescriptor
-            {
-                Name = moduleDescriptor.Name,
-                Main = moduleDefinition.MainFile,
-                NameResolutionSemantics = NameResolutionSemantics.ImplicitProjectReferences,
-                Publisher = null,
-                Version = moduleDescriptor.Version,
-                Projects = new List<AbsolutePath>(moduleDefinition.Specs),
-            };
-
-            return Package.Create(packageId, moduleDefinition.ModuleConfigFile, packageDescriptor);
-        }
 
         /// <inheritdoc />
         public Task<bool?> TryEvaluateModuleAsync([NotNull] IEvaluationScheduler scheduler, [NotNull] ModuleDefinition module, QualifierId qualifierId)

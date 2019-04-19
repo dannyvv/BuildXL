@@ -1,16 +1,17 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// --------------------------------------------------------------------
+//  
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//  
+// --------------------------------------------------------------------
 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.ContractsLight;
-using BuildXL.Utilities.Instrumentation.Common;
-using BuildXL.FrontEnd.Script;
 using BuildXL.FrontEnd.Script.Expressions;
 using BuildXL.FrontEnd.Script.Values;
-using BuildXL.FrontEnd.Script.Evaluator;
+using BuildXL.Utilities.Instrumentation.Common;
 using TypeScript.Net.Utilities;
 
 namespace BuildXL.FrontEnd.Script.Evaluator.Profiling

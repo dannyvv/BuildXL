@@ -1,13 +1,14 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// --------------------------------------------------------------------
+//  
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//  
+// --------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.ContractsLight;
+using BuildXL.FrontEnd.Script.Values;
 using BuildXL.Utilities.Instrumentation.Common;
 using JetBrains.Annotations;
-using BuildXL.FrontEnd.Script;
-using BuildXL.FrontEnd.Script.Values;
 
 #pragma warning disable SA1649 // File name must match first type name
 

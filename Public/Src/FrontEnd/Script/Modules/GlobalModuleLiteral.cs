@@ -3,9 +3,9 @@
 
 using System;
 using System.Diagnostics.ContractsLight;
-using BuildXL.Utilities;
 using BuildXL.FrontEnd.Script.Evaluator;
-using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Workspaces.Core;
+using BuildXL.Utilities;
 using LineInfo = TypeScript.Net.Utilities.LineInfo;
 
 namespace BuildXL.FrontEnd.Script.Values
@@ -21,7 +21,7 @@ namespace BuildXL.FrontEnd.Script.Values
         public SymbolTable SymbolTable { get; }
 
         /// <inheritdoc/>
-        public override Package Package => null;
+        public override ModuleDefinition Module => null;
 
         /// <inheritdoc/>
         public override ModuleLiteral Instantiate(ModuleRegistry moduleRegistry, QualifierValue qualifier)

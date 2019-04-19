@@ -20,6 +20,7 @@ using BuildXL.FrontEnd.Script.Literals;
 using BuildXL.FrontEnd.Script.Values;
 using BuildXL.FrontEnd.Script.Evaluator;
 using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Workspaces.Core;
 using VSCode.DebugAdapter;
 using VSCode.DebugProtocol;
 using static BuildXL.FrontEnd.Script.Debugger.Matcher;
@@ -167,7 +168,7 @@ namespace BuildXL.FrontEnd.Script.Debugger
                     Case<ModuleLiteral>(modLit => ModuleLiteralInfo(context, modLit)),
                     Case<CallableValue>(cv => CallableValueInfo(context, cv).WithOriginal(cv)),
                     Case<ErrorValue>(error => ErrorValueInfo(context)),
-                    Case<Package>(package => PackageInfo(context, package)),
+                    Case<ModuleDescriptor>(module => ModuleDescriptor(context, module)),
                     Case<ObjectLiteral>(objLit => ObjectLiteralInfo(context, objLit).WithOriginal(objLit)),
                     Case<object>(o => o.GetType().IsArray
                         ? ArrayObjInfo(((IEnumerable)o).Cast<object>())
@@ -227,7 +228,7 @@ namespace BuildXL.FrontEnd.Script.Debugger
                 properties.AddRange(new[]
                 {
                     new Property(":path", env.Path.ToDisplayString(context)),
-                    new Property(":package", env.Package),
+                    new Property(":module", env.Module.Descriptor),
                     new Property(":qualifierSpace", GetQualifierSpaceValue(context, moduleInfo.QualifierSpaceId)),
                 });
             }
@@ -399,20 +400,20 @@ namespace BuildXL.FrontEnd.Script.Debugger
             return moduleLiteral.Kind == SyntaxKind.TypeOrNamespaceModuleLiteral ? "namespace" : "module";
         }
 
-        private static ObjectInfo PackageInfo(EvaluationContext context, Package package)
+        private static ObjectInfo ModuleDescriptor(EvaluationContext context, ModuleDescriptor module)
         {
-            return new ObjectInfo("package", GetPackageProperties(context, package));
+            return new ObjectInfo("module", GetPackageProperties(context, module));
         }
 
-        private static List<Property> GetPackageProperties(EvaluationContext context, Package package)
+        private static List<Property> GetPackageProperties(EvaluationContext context, ModuleDescriptor module)
         {
             Contract.Requires(context != null);
-            Contract.Requires(package != null);
+            Contract.Requires(module != null);
 
             return new List<Property>
             {
-                new Property(":name", package.Id.Name.ToString(context.StringTable)),
-                new Property(":version", package.Id.Version.ToString(context.StringTable)),
+                new Property(":name", module.Name),
+                new Property(":version", module.Version),
             };
         }
 

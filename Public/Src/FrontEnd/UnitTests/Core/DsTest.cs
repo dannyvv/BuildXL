@@ -886,7 +886,7 @@ namespace Test.BuildXL.FrontEnd.Core
 
         private Expression[] ParseEvaluatedExpressions(
             FrontEndHostController frontEndHostController,
-            Package package,
+            ModuleDescriptor module,
             AbsolutePath specPath,
             string[] expressions,
             IReadOnlyList<string> customRules = null)
@@ -909,7 +909,7 @@ namespace Test.BuildXL.FrontEnd.Core
                     frontEndHostForExpressions,
                     FrontEndContext,
                     ParseAndEvaluateLogger,
-                    package);
+                    module);
 
                 var expression = translator.ParseExpression(parserContext, specPath, expressions[i]);
 

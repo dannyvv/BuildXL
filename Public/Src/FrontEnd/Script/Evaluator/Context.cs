@@ -133,7 +133,6 @@ namespace BuildXL.FrontEnd.Script.Evaluator
             m_pipConstructionHelper = new Lazy<PipConstructionHelper>(() =>
             {
                 var qualifierId = LastActiveModuleQualifier.QualifierId;
-                var moduelIdString = Package.Id.ToString(FrontEndContext.StringTable);
 
                 return PipConstructionHelper.Create(
                     FrontEndContext,
@@ -141,8 +140,8 @@ namespace BuildXL.FrontEnd.Script.Evaluator
                     FrontEndHost.Engine.Layout.RedirectedDirectory,
                     FrontEndHost.Engine.Layout.TempDirectory,
                     ContextTree.FrontEndHost.PipGraph,
-                    Package.ModuleId,
-                    moduelIdString,
+                    Module.Descriptor.Id,
+                    Module.Descriptor.Name,
 
                     // This is a BIG HACK that still needs to be fixed. Since office doesn't generate stable spec files, i.e. a new value can
                     // rearrange all the values accross specs, we removed the spec from the SemiStableHash and Hash for unique output folders

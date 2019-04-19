@@ -62,14 +62,9 @@ namespace BuildXL.FrontEnd.Script
         protected State m_resolverState;
 
         /// <summary>
-        /// Mappings from package id's to package locations and descriptors.
-        /// </summary>
-        protected ConcurrentDictionary<PackageId, Package> m_packages = new ConcurrentDictionary<PackageId, Package>(PackageIdEqualityComparer.NameOnly);
-
-        /// <summary>
         /// DScript V2 pipeline: a map of owning modules.
         /// </summary>
-        protected Dictionary<ModuleId, Package> m_owningModules;
+        protected HashSet<ModuleId> m_owningModules;
 
         /// <summary>
         /// Mappings package directories to lists of packages.
@@ -144,16 +139,15 @@ namespace BuildXL.FrontEnd.Script
         {
             Contract.Requires(module != null);
             Contract.Assert(m_resolverState == State.ResolverInitialized);
-            Contract.Assert(m_owningModules != null, "Owning modules should not be null if the instance is initialized.");
 
-            if (!m_owningModules.TryGetValue(module.Descriptor.Id, out Package package))
+            if (!m_owningModules.Contains(module.Descriptor.Id))
             {
                 // Current resolver doesn't own a given module.
                 return null;
             }
             
             var factory = CreateRuntimeModelFactory((Workspace)workspace);
-            var tasks = module.Specs.Select(spec => ConvertFileToEvaluationAsync(factory, spec.Key, spec.Value, package)).ToArray();
+            var tasks = module.Specs.Select(spec => ConvertFileToEvaluationAsync(factory, spec.Key, spec.Value, module.Definition)).ToArray();
             var allTasks = await Task.WhenAll(tasks);
 
             return allTasks.All(b => b);
@@ -170,7 +164,7 @@ namespace BuildXL.FrontEnd.Script
             Contract.Assert(m_owningModules != null, "Owning modules should not be null if the instance is initialized.");
 
             var moduleDefinition = (ModuleDefinition)module;
-            if (!m_owningModules.TryGetValue(moduleDefinition.Descriptor.Id, out Package package))
+            if (!m_owningModules.Contains(moduleDefinition.Descriptor.Id))
             {
                 // Current resolver doesn't own the given module.
                 return null;
@@ -223,7 +217,7 @@ namespace BuildXL.FrontEnd.Script
             return result;
         }
 
-        private async Task<bool> ConvertFileToEvaluationAsync(RuntimeModelFactory factory, AbsolutePath specPath, ISourceFile sourceFile, Package package)
+        private async Task<bool> ConvertFileToEvaluationAsync(RuntimeModelFactory factory, AbsolutePath specPath, ISourceFile sourceFile, ModuleDefinition module)
         {
             using (FrontEndStatistics.SpecConversion.Start(sourceFile.Path.AbsolutePath))
             {
@@ -242,7 +236,7 @@ namespace BuildXL.FrontEnd.Script
 
                 var parserContext = CreateParserContext(
                     this,
-                    package,
+                    module,
                     origin: null);
 
                 var conversionResult = await factory.ConvertSourceFileAsync(parserContext, f);
@@ -250,11 +244,7 @@ namespace BuildXL.FrontEnd.Script
 
                 if (conversionResult.Success)
                 {
-                    RegisterSuccessfullyParsedModule(conversionResult.SourceFile, conversionResult, package);
-
-                    // TODO: should the project be registered only when the parse is successful?
-                    // In the original implementation (v1) the path was added all the time.
-                    package.AddParsedProject(AbsolutePath.Create(parserContext.PathTable, sourceFile.FileName));
+                    RegisterSuccessfullyParsedModule(conversionResult.SourceFile, conversionResult);
                 }
 
                 return conversionResult.Success;

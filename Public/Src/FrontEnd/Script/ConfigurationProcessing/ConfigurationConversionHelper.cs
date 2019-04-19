@@ -400,8 +400,8 @@ namespace BuildXL.FrontEnd.Script
 
         private IReadOnlyCollection<FileModuleLiteral> ConvertWorkspaceInParallel(Workspace workspace, AbsolutePath configPath)
         {
-            var package = CreateDummyPackageFromPath(configPath);
-            var parserContext = CreateParserContext(resolver: null, package: package, origin: null);
+            //var configModule = CreateDummyPackageFromPath(configPath);
+            var parserContext = CreateParserContext(resolver: null, module: configModule, origin: null);
 
             // Need to use ConfigurationModule and not a set of source specs.
             // We convert configuration which is not a source specs.
@@ -416,7 +416,7 @@ namespace BuildXL.FrontEnd.Script
 
         private FileModuleLiteral ConvertAndRegisterSourceFile(RuntimeModelContext runtimeModelContext, Workspace workspace, ISourceFile sourceFile, AbsolutePath path, bool isConfig)
         {
-            var moduleLiteral = ModuleLiteral.CreateFileModule(path, FrontEndHost.ModuleRegistry, runtimeModelContext.Package, sourceFile.LineMap);
+            var moduleLiteral = ModuleLiteral.CreateFileModule(path, FrontEndHost.ModuleRegistry, runtimeModelContext.Module, sourceFile.LineMap);
 
             var conversionContext = new AstConversionContext(runtimeModelContext, path, sourceFile, moduleLiteral);
             var converter = AstConverter.Create(Context.QualifierTable, conversionContext, ConversionConfiguration, workspace);
@@ -443,7 +443,7 @@ namespace BuildXL.FrontEnd.Script
 
             if (!Logger.HasErrors)
             {
-                RegisterSuccessfullyParsedModule(convertedSourceFile, moduleLiteral, runtimeModelContext.Package);
+                RegisterSuccessfullyParsedModule(convertedSourceFile, moduleLiteral);
             }
 
             return moduleLiteral;

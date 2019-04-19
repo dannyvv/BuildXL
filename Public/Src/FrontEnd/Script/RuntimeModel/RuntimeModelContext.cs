@@ -7,6 +7,7 @@ using BuildXL.FrontEnd.Script.Evaluator;
 using BuildXL.FrontEnd.Script.Tracing;
 using BuildXL.FrontEnd.Script.Values;
 using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Workspaces.Core;
 using BuildXL.Utilities;
 using BuildXL.Utilities.Instrumentation.Common;
 using BuildXL.Utilities.Qualifier;
@@ -63,7 +64,7 @@ namespace BuildXL.FrontEnd.Script.RuntimeModel
         /// <summary>
         /// Root path.
         /// </summary>
-        public AbsolutePath RootPath { get; }
+        public AbsolutePath RootPath => Module.Root;
 
         /// <summary>
         /// Origin that triggers the parsing.
@@ -71,26 +72,25 @@ namespace BuildXL.FrontEnd.Script.RuntimeModel
         public LocationData Origin { get; }
 
         /// <summary>
-        /// Package.
+        /// Module.
         /// </summary>
-        public Package Package { get; }
+        public ModuleDefinition Module { get; }
 
         /// <nodoc />
         public RuntimeModelContext(
             FrontEndHost frontEndHost,
             FrontEndContext frontEndContext,
             Logger logger,
-            Package package,
+            ModuleDefinition module,
             LocationData origin = default(LocationData))
         {
             Contract.Requires(frontEndHost != null);
             Contract.Requires(frontEndContext != null);
-            Contract.Requires(package != null);
+            Contract.Requires(module != null);
 
             FrontEndHost = frontEndHost;
             m_frontEndContext = frontEndContext;
-            Package = package;
-            RootPath = package.Path.GetParent(frontEndContext.PathTable);
+            Module = module;
             Origin = origin;
             Logger = logger;
         }

@@ -15,18 +15,18 @@ namespace BuildXL.FrontEnd.Script.Failures
     public sealed class ProjectOutsideModuleConeFailure : WorkspaceFailure
     {
         private readonly AbsolutePath m_outOfConeProject;
-        private readonly Package m_package;
+        private readonly ModuleDescriptor m_module;
         private readonly PathTable m_pathTable;
 
         /// <nodoc/>
-        public ProjectOutsideModuleConeFailure(PathTable pathTable, Package package, AbsolutePath outOfConeProject)
+        public ProjectOutsideModuleConeFailure(PathTable pathTable, ModuleDescriptor module, AbsolutePath outOfConeProject)
         {
             Contract.Requires(pathTable != null);
-            Contract.Requires(package != null);
+            Contract.Requires(module != null);
             Contract.Requires(outOfConeProject.IsValid);
 
             m_pathTable = pathTable;
-            m_package = package;
+            m_package = module;
             m_outOfConeProject = outOfConeProject;
         }
 

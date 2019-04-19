@@ -38,7 +38,7 @@ namespace BuildXL.FrontEnd.Script
                         context.FrontEndContext,
                         writer,
                         context.LastActiveUsedPath.GetParent(context.FrontEndContext.PathTable),
-                        context.Package.Path.GetParent(context.FrontEndContext.PathTable),
+                        context.Module.Root,
                         node);
                 }
                 catch (NotImplementedException)

@@ -1,5 +1,8 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// --------------------------------------------------------------------
+//  
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//  
+// --------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
@@ -7,18 +10,17 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.ContractsLight;
 using System.Linq;
 using System.Threading.Tasks;
+using BuildXL.FrontEnd.Script.Declarations;
+using BuildXL.FrontEnd.Script.Evaluator;
+using BuildXL.FrontEnd.Script.Expressions;
+using BuildXL.FrontEnd.Script.RuntimeModel.AstBridge;
+using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Sdk.Evaluation;
+using BuildXL.FrontEnd.Workspaces.Core;
 using BuildXL.Utilities;
 using BuildXL.Utilities.Qualifier;
 using BuildXL.Utilities.Tasks;
 using JetBrains.Annotations;
-using BuildXL.FrontEnd.Script.Ambients;
-using BuildXL.FrontEnd.Script;
-using BuildXL.FrontEnd.Script.Declarations;
-using BuildXL.FrontEnd.Script.Expressions;
-using BuildXL.FrontEnd.Script.RuntimeModel.AstBridge;
-using BuildXL.FrontEnd.Script.Evaluator;
-using BuildXL.FrontEnd.Sdk;
-using BuildXL.FrontEnd.Sdk.Evaluation;
 using TypeScript.Net.Utilities;
 using static BuildXL.Utilities.FormattableStringEx;
 using BindingDictionary = System.Collections.Generic.Dictionary<BuildXL.Utilities.SymbolAtom, BuildXL.FrontEnd.Script.Values.ModuleBinding>;
@@ -144,13 +146,13 @@ namespace BuildXL.FrontEnd.Script.Values
         public QualifierValue Qualifier => m_qualifier;
 
         /// <summary>
-        /// Package that owns this file module.
+        /// ModuleDescriptor that owns this file.
         /// </summary>
         /// <remarks>
         /// Null for <see cref="GlobalModuleLiteral"/> or not-null for other kind of module literals.
         /// </remarks>
         [CanBeNull]
-        public abstract Package Package { get; }
+        public abstract ModuleDefinition Module{ get; }
 
         /// <summary>
         /// Checks if this module literal is empty.
@@ -195,14 +197,14 @@ namespace BuildXL.FrontEnd.Script.Values
         /// <remarks>
         /// This factory should only be used during parsing.
         /// </remarks>
-        public static FileModuleLiteral CreateFileModule(AbsolutePath path, IModuleRegistry moduleRegistry, Package package, LineMap lineMap)
+        public static FileModuleLiteral CreateFileModule(AbsolutePath path, IModuleRegistry moduleRegistry, ModuleDefinition module, LineMap lineMap)
         {
             Contract.Requires(path.IsValid);
             Contract.Requires(moduleRegistry != null);
-            Contract.Requires(package != null);
+            Contract.Requires(module != null);
             Contract.Requires(lineMap != null);
 
-            return CreateInstantiatedFileModule(path, QualifierValue.Unqualified, ((ModuleRegistry)moduleRegistry).GlobalLiteral, package, (ModuleRegistry)moduleRegistry, lineMap: lineMap);
+            return CreateInstantiatedFileModule(path, QualifierValue.Unqualified, ((ModuleRegistry)moduleRegistry).GlobalLiteral, module, (ModuleRegistry)moduleRegistry, lineMap: lineMap);
         }
 
 
@@ -212,14 +214,14 @@ namespace BuildXL.FrontEnd.Script.Values
         /// <remarks>
         /// This factory should only be used during parsing.
         /// </remarks>
-        public static FileModuleLiteral CreateFileModule(AbsolutePath path, GlobalModuleLiteral globalScope, Package package, ModuleRegistry moduleRegistry, LineMap lineMap)
+        public static FileModuleLiteral CreateFileModule(AbsolutePath path, GlobalModuleLiteral globalScope, ModuleDefinition module, ModuleRegistry moduleRegistry, LineMap lineMap)
         {
             Contract.Requires(path.IsValid);
             Contract.Requires(globalScope != null);
-            Contract.Requires(package != null);
+            Contract.Requires(module != null);
             Contract.Requires(lineMap != null);
 
-            return CreateInstantiatedFileModule(path, QualifierValue.Unqualified, globalScope, package, moduleRegistry, lineMap: lineMap);
+            return CreateInstantiatedFileModule(path, QualifierValue.Unqualified, globalScope, module, moduleRegistry, lineMap: lineMap);
         }
 
         /// <summary>
@@ -228,9 +230,9 @@ namespace BuildXL.FrontEnd.Script.Values
         /// <remarks>
         /// The outer scope is typically the global module.
         /// </remarks>
-        protected static FileModuleLiteral CreateInstantiatedFileModule(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral globalScope, Package package, ModuleRegistry moduleRegistry, LineMap lineMap)
+        protected static FileModuleLiteral CreateInstantiatedFileModule(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral globalScope, ModuleDefinition module, ModuleRegistry moduleRegistry, LineMap lineMap)
         {
-            return new FileModuleLiteral(path, qualifier, globalScope, package, moduleRegistry, lineMap);
+            return new FileModuleLiteral(path, qualifier, globalScope, module, moduleRegistry, lineMap);
         }
 
         #endregion Constructors and FactoryMethods

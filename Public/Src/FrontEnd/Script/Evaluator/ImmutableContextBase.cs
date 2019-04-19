@@ -10,6 +10,7 @@ using BuildXL.FrontEnd.Script.RuntimeModel.AstBridge;
 using BuildXL.FrontEnd.Script.Tracing;
 using BuildXL.FrontEnd.Script.Values;
 using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Workspaces.Core;
 using BuildXL.Utilities;
 using BuildXL.Utilities.Instrumentation.Common;
 using JetBrains.Annotations;
@@ -145,23 +146,11 @@ namespace BuildXL.FrontEnd.Script.Evaluator
         {
             get
             {
-                return LastActiveUsedModule.Package.Id.Name.ToString(FrontEndContext.StringTable);
+                return LastActiveUsedModule.Module.Descriptor.Name;
             }
         }
 
-        /// <summary>
-        /// Last active used package.
-        /// </summary>
-        public Package Package
-        {
-            get
-            {
-                Package package = LastActiveUsedModule.Package;
-                Contract.Assume(package != null, "The module of an evaluation context must be owned by a package.");
-
-                return package;
-            }
-        }
+        public ModuleDefinition Module => LastActiveUsedModule.Module;
 
         /// <summary>
         /// Queue that manages pool of evaluation tasks.
@@ -183,7 +172,7 @@ namespace BuildXL.FrontEnd.Script.Evaluator
                     return m_relativePath;
                 }
 
-                var packageRoot = Package.Path.GetParent(FrontEndContext.PathTable);
+                var packageRoot = Module.Root;
                 var specPath = LastActiveUsedPath;
 
                 // Cache relative path computation because it turns out to be a bit expensive.

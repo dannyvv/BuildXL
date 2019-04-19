@@ -14,6 +14,7 @@ using BuildXL.FrontEnd.Script.Expressions;
 using BuildXL.FrontEnd.Script.RuntimeModel.AstBridge;
 using BuildXL.FrontEnd.Sdk;
 using BuildXL.FrontEnd.Sdk.Evaluation;
+using BuildXL.FrontEnd.Workspaces.Core;
 using BuildXL.Utilities;
 using BuildXL.Utilities.Qualifier;
 using TypeScript.Net.Utilities;
@@ -66,7 +67,7 @@ namespace BuildXL.FrontEnd.Script.Values
         public LineMap LineMap { get; }
 
         /// <inheritdoc/>
-        public override Package Package { get; }
+        public override ModuleDefinition Module { get; }
 
         /// <summary>
         /// 'this' is a valid file module in this case.
@@ -77,8 +78,8 @@ namespace BuildXL.FrontEnd.Script.Values
         public override SyntaxKind Kind => SyntaxKind.FileModuleLiteral;
 
         /// <nodoc/>
-        internal FileModuleLiteral(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral outerScope, Package package, ModuleRegistry moduleRegistry, LineMap lineMap)
-            : this(ModuleLiteralId.Create(path), qualifier, outerScope, package, lineMap)
+        internal FileModuleLiteral(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral outerScope, ModuleDefinition module, ModuleRegistry moduleRegistry, LineMap lineMap)
+            : this(ModuleLiteralId.Create(path), qualifier, outerScope, module, lineMap)
         {
             Contract.Requires(path.IsValid);
             Contract.Requires(lineMap != null);
@@ -87,21 +88,21 @@ namespace BuildXL.FrontEnd.Script.Values
         }
 
         /// <nodoc/>
-        internal FileModuleLiteral(ModuleLiteralId id, QualifierValue qualifier, GlobalModuleLiteral outerScope, Package package, LineMap lineMap)
+        internal FileModuleLiteral(ModuleLiteralId id, QualifierValue qualifier, GlobalModuleLiteral outerScope, ModuleDefinition module, LineMap lineMap)
             : base(id, qualifier, outerScope, location: default(LineInfo))
         {
             Contract.Requires(id.Path.IsValid);
-            Contract.Requires(package != null);
+            Contract.Requires(module != null);
             Contract.Requires(lineMap != null);
 
-            Package = package;
+            Module = module;
             m_partialSymbolsCache = Lazy.Create(() => new ConcurrentDictionary<FullSymbol, ModuleBinding>());
             LineMap = lineMap;
         }
 
         /// <nodoc />
-        private FileModuleLiteral(BuildXLReader reader, PathTable pathTable, AbsolutePath path, Package package, GlobalModuleLiteral outerScope, ModuleRegistry moduleRegistry, LineMap lineMap)
-            : this(path, QualifierValue.Unqualified, outerScope, package, moduleRegistry, lineMap)
+        private FileModuleLiteral(BuildXLReader reader, PathTable pathTable, AbsolutePath path, ModuleDefinition module, GlobalModuleLiteral outerScope, ModuleRegistry moduleRegistry, LineMap lineMap)
+            : this(path, QualifierValue.Unqualified, outerScope, module, moduleRegistry, lineMap)
         {
             var context = new DeserializationContext(this, reader, pathTable, lineMap);
 
@@ -127,7 +128,14 @@ namespace BuildXL.FrontEnd.Script.Values
             GlobalModuleLiteral outerScope,
             ModuleRegistry moduleRegistry,
             LineMap lineMap)
-            : this(reader, pathTable, reader.ReadAbsolutePath(), ReadPackage(reader, pathTable), outerScope, moduleRegistry, lineMap)
+            : this(
+                reader,
+                pathTable,
+                path: reader.ReadAbsolutePath(),
+                module: ModuleDefinition.Deserialize(reader, pathTable),
+                outerScope: outerScope, 
+                moduleRegistry: moduleRegistry, 
+                lineMap: lineMap)
         { }
 
         internal static FileModuleLiteral Read(
@@ -162,7 +170,7 @@ namespace BuildXL.FrontEnd.Script.Values
 
             writer.Write(Path);
 
-            WritePackage(Package, writer);
+            Module.Serialize(writer);
 
             // Don't need to save qualifier, because it only valid for instantiated modules, and this module should be uninstantiated.
             writer.WriteCompact(m_resolvedEntries.Count);
@@ -290,7 +298,7 @@ namespace BuildXL.FrontEnd.Script.Values
             }
 
             // Create a new file module instance.
-            var newModule = CreateInstantiatedFileModule(module.Id.Path, qualifier, outerScope, module.Package, module.m_moduleRegistry, LineMap);
+            var newModule = CreateInstantiatedFileModule(module.Id.Path, qualifier, outerScope, module.Module, module.m_moduleRegistry, LineMap);
             newModule.CopyBindings(module, qualifier);
 
             return newModule;

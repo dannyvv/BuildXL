@@ -281,7 +281,7 @@ namespace BuildXL.FrontEnd.Script.RuntimeModel.AstBridge
 
         private IAstConverter CreateAstConverter(ISourceFile sourceFile, RuntimeModelContext runtimeModelContext, AbsolutePath path, AstConversionConfiguration conversionConfiguration, Workspace workspace)
         {
-            var module = ModuleLiteral.CreateFileModule(path, runtimeModelContext.FrontEndHost.ModuleRegistry, runtimeModelContext.Package, sourceFile.LineMap);
+            var module = ModuleLiteral.CreateFileModule(path, runtimeModelContext.FrontEndHost.ModuleRegistry, runtimeModelContext.Module, sourceFile.LineMap);
             return CreateAstConverter(sourceFile, module, runtimeModelContext, path, conversionConfiguration, workspace);
         }
 

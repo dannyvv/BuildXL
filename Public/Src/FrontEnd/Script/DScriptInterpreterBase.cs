@@ -207,10 +207,9 @@ namespace BuildXL.FrontEnd.Script
         /// Registers parsed module.
         /// </summary>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        protected void RegisterSuccessfullyParsedModule(SourceFile sourceFile, FileModuleLiteral moduleLiteral, Package package)
+        protected void RegisterSuccessfullyParsedModule(SourceFile sourceFile, FileModuleLiteral moduleLiteral)
         {
             Contract.Requires(moduleLiteral != null);
-            Contract.Requires(package != null);
 
             var moduleData = new UninstantiatedModuleInfo(
                 sourceFile,
@@ -232,11 +231,10 @@ namespace BuildXL.FrontEnd.Script
         /// <summary>
         /// Registers parsed module.
         /// </summary>
-        protected void RegisterSuccessfullyParsedModule<T>(SourceFile sourceFile, T parseResult, Package package) where T : SourceFileParseResult
+        protected void RegisterSuccessfullyParsedModule<T>(SourceFile sourceFile, T parseResult) where T : SourceFileParseResult
         {
             Contract.Requires(parseResult != null);
             Contract.Requires(parseResult.Success);
-            Contract.Requires(package != null);
 
             var moduleData = new UninstantiatedModuleInfo(
                 sourceFile,
@@ -297,13 +295,13 @@ namespace BuildXL.FrontEnd.Script
         }
 
         /// <nodoc />
-        protected RuntimeModelContext CreateParserContext(IResolver resolver, Package package, LocationData? origin)
+        protected RuntimeModelContext CreateParserContext(IResolver resolver, ModuleDefinition module, LocationData? origin)
         {
             return new RuntimeModelContext(
                 FrontEndHost,
                 frontEndContext: Context,
                 logger: Logger,
-                package: package,
+                module: module,
                 origin: origin ?? default(LocationData));
         }
 

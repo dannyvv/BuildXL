@@ -3,10 +3,9 @@
 
 using System.Diagnostics.ContractsLight;
 using System.Threading;
-using BuildXL.FrontEnd.Script;
-using BuildXL.Utilities;
 using BuildXL.FrontEnd.Script.Evaluator;
-using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Workspaces.Core;
+using BuildXL.Utilities;
 using LineInfo = TypeScript.Net.Utilities.LineInfo;
 
 namespace BuildXL.FrontEnd.Script.Values
@@ -23,7 +22,7 @@ namespace BuildXL.FrontEnd.Script.Values
 
         /// <inheritdoc/>
         /// ReSharper disable once PossibleNullReferenceException
-        public override Package Package => OuterScope.Package;
+        public override ModuleDefinition Module => OuterScope.Module;
 
         /// <summary>
         /// OuterScope could be <see cref="GlobalModuleLiteral"/>, in which case this property returns null. This is the case for ambients.
