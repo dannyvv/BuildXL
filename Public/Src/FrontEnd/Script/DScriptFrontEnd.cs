@@ -22,6 +22,11 @@ namespace BuildXL.FrontEnd.Script
         private SourceFileProcessingQueue<bool> m_sourceFileProcessingQueue;
 
         /// <nodoc/>
+        public DScriptFrontEnd()
+        {
+        }
+
+        /// <nodoc/>
         public DScriptFrontEnd(
             IFrontEndStatistics statistics,
             Logger logger = null,

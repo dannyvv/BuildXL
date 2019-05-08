@@ -27,9 +27,6 @@ using BuildXL.Utilities.Instrumentation.Common;
 using BuildXL.Utilities.Tracing;
 using BuildXL.Utilities.Configuration;
 using BuildXL.Scheduler.Tracing;
-using Logger = BuildXL.App.Tracing.Logger;
-using ProcessNativeMethods = BuildXL.Native.Processes.ProcessUtilities;
-using Strings = bxl.Strings;
 using BuildXL.Engine.Recovery;
 using BuildXL.FrontEnd.Sdk.FileSystem;
 #pragma warning disable SA1649 // File name must match first type name
@@ -42,6 +39,11 @@ using Microsoft.Diagnostics.Tracing;
 using System.Diagnostics.Tracing;
 #endif
 using static BuildXL.Utilities.FormattableStringEx;
+
+using Logger = BuildXL.App.Tracing.Logger;
+using ProcessNativeMethods = BuildXL.Native.Processes.ProcessUtilities;
+using FrontEndFactory = BuildXL.FrontEnd.Sdk.FrontEndFactory;
+using Strings = bxl.Strings;
 
 
 namespace BuildXL
@@ -733,17 +735,29 @@ namespace BuildXL
         {
             var fileSystem = new PassThroughFileSystem(m_pathTable);
             var engineContext = EngineContext.CreateNew(cancellationToken, m_pathTable, fileSystem);
+            var frontEndFactory = CreateFrontEndFactory();
 
             return RunEngine(
-                    engineContext,
-                    FrontEndControllerFactory.Create(
-                        m_configuration.FrontEnd.FrontEndMode(),
-                        loggingContext,
-                        m_initialConfiguration,
-                        collector),
-                    appLoggers.TrackingEventListener,
-                    engineState,
-                    out visualizationInformation);
+                loggingContext,
+                engineContext,
+                frontEndFactory,
+                appLoggers.TrackingEventListener,
+                engineState,
+                out visualizationInformation);
+        }
+
+        private FrontEndFactory CreateFrontEndFactory()
+        {
+            var factory = new FrontEndFactory("DScript");
+            factory.RegisterFrontEnd<BuildXL.FrontEnd.Script.DScriptFrontEnd>();
+            factory.RegisterFrontEnd<BuildXL.FrontEnd.Nuget.NugetFrontEnd>();
+            factory.RegisterFrontEnd<BuildXL.FrontEnd.Download.DownloadFrontEnd>();
+
+            factory.RegisterFrontEnd<BuildXL.FrontEnd.MsBuild.MsBuildFrontEnd>();
+            factory.RegisterFrontEnd<BuildXL.FrontEnd.CMake.CMakeFrontEnd>();
+            factory.RegisterFrontEnd<BuildXL.FrontEnd.Ninja.NinjaFrontEnd>();
+
+            return factory;
         }
 
         internal static KeyValuePair<ExitKind, string> ClassifyFailureFromLoggedEvents(TrackingEventListener listener)
@@ -1829,18 +1843,17 @@ namespace BuildXL
         }
 
         private EngineState RunEngine(
+            LoggingContext loggingContext,
             EngineContext engineContext,
-            FrontEndControllerFactory factory,
+            FrontEndFactory factory,
             TrackingEventListener trackingEventListener,
             EngineState engineState,
             out EngineLiveVisualizationInformation visualizationInformation)
         {
             visualizationInformation = null;
 
-            var configuration = factory.Configuration;
-            var loggingContext = factory.LoggingContext;
-
             var appInitializationDurationMs = (int)(DateTime.UtcNow - m_startTimeUtc).TotalMilliseconds;
+            var configuration = m_initialConfiguration;
 
             BuildXL.Tracing.Logger.Log.Statistic(
                 loggingContext,
@@ -1855,7 +1868,6 @@ namespace BuildXL
                 engineContext,
                 configuration,
                 factory,
-                factory.Collector,
                 m_startTimeUtc,
                 trackingEventListener,
                 rememberAllChangedTrackedInputs: true,

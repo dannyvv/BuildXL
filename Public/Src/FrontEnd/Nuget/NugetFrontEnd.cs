@@ -22,6 +22,11 @@ namespace BuildXL.FrontEnd.Nuget
         private SourceFileProcessingQueue<bool> m_sourceFileProcessingQueue;
 
         /// <nodoc/>
+        public NugetFrontEnd()
+        {
+        }
+
+        /// <nodoc/>
         public NugetFrontEnd(
             IFrontEndStatistics statistics,
             Logger logger = null,

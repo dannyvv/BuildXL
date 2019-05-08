@@ -111,17 +111,6 @@ namespace BuildXL.Engine
         private ICommandLineConfiguration m_initialCommandLineConfiguration;
 
         /// <summary>
-        /// The factory used to create an <see cref="IFrontEndController"/>.
-        /// </summary>
-        /// <remarks>
-        /// Only used for graph patching: when <see cref="EngineContext"/> is reloaded from disk,
-        /// the old one (used to originally create a <see cref="IFrontEndController"/>) is invalidated,
-        /// so a new <see cref="IFrontEndController"/> must be created (using this factory) for the
-        /// newly reloaded engine context.
-        /// </remarks>
-        private readonly IFrontEndControllerFactory m_frontEndControllerFactory;
-
-        /// <summary>
         /// The FrontEnd controller
         /// </summary>
         internal IFrontEndController FrontEndController { get; private set; }
@@ -260,7 +249,6 @@ namespace BuildXL.Engine
             EngineContext context,
             IConfiguration configuration,
             ICommandLineConfiguration initialConfig, // some configuration options are still only on the initialConfig. When cleaned up this argument and member should be removed.
-            IFrontEndControllerFactory frontEndControllerFactory,
             IFrontEndController frontEndController,
             PerformanceCollector collector,
             DateTime? processStartTimeUtc,
@@ -291,7 +279,6 @@ namespace BuildXL.Engine
             Configuration = configuration;
 
             m_initialCommandLineConfiguration = initialConfig;
-            m_frontEndControllerFactory = frontEndControllerFactory;
             FrontEndController = frontEndController;
             m_processStartTimeUtc = processStartTimeUtc ?? DateTime.UtcNow;
             m_trackingEventListener = trackingEventListener;
@@ -334,7 +321,7 @@ namespace BuildXL.Engine
             LoggingContext loggingContext,
             EngineContext context,
             ICommandLineConfiguration initialCommandLineConfiguration,
-            IFrontEndControllerFactory frontEndControllerFactory,
+            FrontEndFactory frontEndFactory,
             PerformanceCollector collector = null,
             DateTime? processStartTimeUtc = null,
             TrackingEventListener trackingEventListener = null,
@@ -347,14 +334,6 @@ namespace BuildXL.Engine
             Contract.Requires(initialCommandLineConfiguration.Layout != null);
             Contract.Requires(initialCommandLineConfiguration.Layout.PrimaryConfigFile.IsValid, "The caller is responsible for making sure the initial layout is properly configured by calling PopulateLoggingAndLayoutConfiguration on the config.");
             Contract.Requires(initialCommandLineConfiguration.Layout.BuildEngineDirectory.IsValid, "The caller is responsible for making sure the initial layout is properly configured by calling PopulateLoggingAndLayoutConfiguration on the config.");
-
-            // Engine is responsible for front-end construction.
-            // This helps to release all front-end related memory right after evaluation phase.
-            var frontEndController = frontEndControllerFactory.Create(context.PathTable, context.SymbolTable);
-            if (frontEndController == null)
-            {
-                return null;
-            }
 
             // Use a copy of the provided configuration. The engine mutates the configuration and invalidates old copies
             // as a safety mechanism against using out of date references. An external consumer of the engine may want
@@ -385,8 +364,7 @@ namespace BuildXL.Engine
 
             initialCommandLineConfiguration = mutableInitialConfig;
 
-            var frontEndContext = context.ToFrontEndContext(loggingContext);
-            frontEndController.InitializeHost(frontEndContext, initialCommandLineConfiguration);
+            var frontEndController = CreateFrontEndController(context, initialCommandLineConfiguration);
 
             ConfigurationImpl configuration;
             using (PerformanceMeasurement.StartWithoutStatistic(
@@ -417,7 +395,6 @@ namespace BuildXL.Engine
                 context,
                 configuration,
                 initialCommandLineConfiguration,
-                frontEndControllerFactory,
                 frontEndController,
                 collector,
                 processStartTimeUtc,
@@ -425,6 +402,15 @@ namespace BuildXL.Engine
                 rememberAllChangedTrackedInputs,
                 commitId,
                 buildVersion);
+        }
+
+        private static IFrontEndController CreateFrontEndController(LoggingContext loggingContext, EngineContext context, CommandLineConfiguration commandlineConfiguration)
+        {
+            var frontEndController = new FrontEndHostController();
+            var frontEndContext = context.ToFrontEndContext(loggingContext);
+            frontEndController.InitializeHost(frontEndContext, initialCommandLineConfiguration);
+
+
         }
 
         /// <summary>

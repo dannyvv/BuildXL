@@ -303,6 +303,11 @@ namespace BuildXL.FrontEnd.Script
                 frontEndContext: Context,
                 logger: Logger,
                 package: package,
+<<<<<<< HEAD
+=======
+                globals: Constants.Global,
+                moduleRegistry: SharedModuleRegistry,
+>>>>>>> sdf
                 origin: origin ?? default(LocationData));
         }
 

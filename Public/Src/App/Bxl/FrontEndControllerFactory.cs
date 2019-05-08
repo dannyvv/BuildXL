@@ -30,7 +30,7 @@ namespace BuildXL
     /// "Yet another factory" (c) that is responsible for entire front-end construction.
     /// </summary>
     /// <remarks>
-    /// This class glues together different lower level factories like <see cref="FrontEndFactory"/> and <see cref="DScriptWorkspaceResolverFactory"/>
+    /// This class glues together different lower level factories like <see cref="FrontEndFactoryHeavy"/> and <see cref="DScriptWorkspaceResolverFactory"/>
     /// in order to hide all this complexity.
     /// </remarks>
     public sealed class FrontEndControllerFactory : IFrontEndControllerFactory
@@ -103,7 +103,7 @@ namespace BuildXL
 
         private IFrontEndController CreateControllerWithProfiler(PathTable pathTable, SymbolTable symbolTable)
         {
-            var frontEndFactory = new FrontEndFactory();
+            var frontEndFactory = new FrontEndFactoryHeavy();
             var profilerDecorator = new ProfilerDecorator();
 
             // When evaluation is done we materialize the result of the profiler
@@ -144,7 +144,7 @@ namespace BuildXL
             var debugServer = new DebugServer(LoggingContext, pathTable, pathTranslator, debugServerPort);
             Task<IDebugger> debuggerTask = debugServer.StartAsync();
             var evaluationDecorator = new LazyDecorator(debuggerTask, Configuration.FrontEnd.DebuggerBreakOnExit());
-            var frontEndFactory = new FrontEndFactory();
+            var frontEndFactory = new FrontEndFactoryHeavy();
 
             frontEndFactory.AddPhaseStartHook(EnginePhases.Evaluate, () =>
             {
@@ -176,7 +176,7 @@ namespace BuildXL
 
         private IFrontEndController CreateRegularController(SymbolTable symbolTable)
         {
-            var frontEndFactory = new FrontEndFactory();
+            var frontEndFactory = new FrontEndFactoryHeavy();
 
             return TryCreateFrontEndController(
                 frontEndFactory,
@@ -198,7 +198,7 @@ namespace BuildXL
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "Consumers should call Dispose explicitly")]
         private static IFrontEndController TryCreateFrontEndController(
-            FrontEndFactory frontEndFactory,
+            FrontEndFactoryHeavy frontEndFactory,
             IDecorator<EvaluationResult> decorator,
             ICommandLineConfiguration configuration,
             SymbolTable symbolTable,

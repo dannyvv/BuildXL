@@ -101,7 +101,7 @@ namespace BuildXL.FrontEnd.Core
         public FrontEndContext FrontEndContext { get; private set; }
 
         /// <summary>
-        /// The Factory to create frontends
+        /// The Factory to create FrontEnds
         /// </summary>
         private readonly FrontEndFactory m_frontEndFactory;
 
@@ -1053,7 +1053,7 @@ namespace BuildXL.FrontEnd.Core
         {
             Contract.Requires(frontEndContext != null);
 
-            var frontEndFactory = new FrontEndFactory();
+            var frontEndFactory = new FrontEndFactoryHeavy();
             frontEndFactory.TrySeal(frontEndContext.LoggingContext);
 
             var frontEndHost = new FrontEndHostController(
