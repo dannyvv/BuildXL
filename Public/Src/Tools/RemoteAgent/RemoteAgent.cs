@@ -12,16 +12,22 @@ using BuildXL.Cache.ContentStore.Interfaces.Time;
 using BuildXL.Cache.ContentStore.Logging;
 using BuildXL.Cache.ContentStore.Stores;
 using BuildXL.Cloud.Proto;
+using BuildXL.Storage;
+using BuildXL.Utilities.Configuration.Mutable;
 using Grpc.Core;
 
 namespace RemoteAgent
 {
     public class RemoteAgent : IDisposable
     {
+        // State
+        private string m_root;
         // CAS
         private FileLog m_casFileLog;
         private Logger m_casLogger;
         private IContentSession m_casSession;
+
+        // Service
         private Server m_server;
 
         public RemoteAgent()
@@ -31,8 +37,10 @@ namespace RemoteAgent
 
         public async Task StartAsync(string root, int port)
         {
+            ContentHashingUtilities.SetDefaultHashType();
+            m_root = root;
             await StartCacheAsync(root);
-            await StartServiceAsync(port);
+            StartService(port);
         }
 
         private async Task StartCacheAsync(string root)
@@ -75,14 +83,17 @@ namespace RemoteAgent
 
         }
 
-        private async Task StartServiceAsync(int port)
+        private void StartService(int port)
         {
+            // $TODO: Set defaults;
+            var configuration = new SandboxConfiguration();
+
             m_server = new Server()
                {
                    Services =
                    {
-                       ContentServer.BindService(new RemoteCasImpl(m_casSession, m_casLogger)),
-                       RemoteAgentService.BindService(new RemoteAgentServiceImpl()),
+                       RemoteCas.BindService(new RemoteCasImpl(Path.Combine(m_root, "uploads"), m_casSession, m_casLogger)),
+                       RemoteExec.BindService(new RemoteExecImpl(Path.Combine(m_root, "sandbox"), configuration, m_casSession, m_casLogger)),
                    },
                    Ports =
                    {
@@ -93,7 +104,7 @@ namespace RemoteAgent
 
             m_server.Start();
         }
-
+        
         public async Task ShutDownAsync()
         {
             if (m_server != null)

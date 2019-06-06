@@ -5,6 +5,9 @@ import {Artifact, Cmd, Transformer} from "Sdk.Transformers";
 
 export const cmdTool: Transformer.ToolDefinition = {
     exe: f`cmd.exe`,
+    runtimeDependencies: [
+        f`README.md`,
+    ],
     dependsOnWindowsDirectories: true,
 };
 

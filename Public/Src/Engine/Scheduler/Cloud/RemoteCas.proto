@@ -3,7 +3,7 @@
 package BuildXL.Cloud.Proto;
 
 // Defines limmited version of content server. When content server support is turned on we can swtich
-service ContentServer {
+service RemoteCas {
     
     rpc PinBulk(PinBulkRequest) returns (PinBulkResponse) {}
 
@@ -12,42 +12,37 @@ service ContentServer {
 
 // Headers
 message RequestHeader {
-    int32 SessionId = 1;
-    string TraceId = 2;
+    int32 sessionId = 1;
+    string traceId = 2;
 }
 
 // Common
-message PinBulkResponse {
-    map<int32, ResponseHeader> Header = 1;
-}
-
-message ContentHashAndHashTypeData {
-    int32 HashType = 1;
-    bytes ContentHash = 2;
-}
 
 message ResponseHeader {
-    bool Succeeded = 1;
-    int32 Result = 2;
-    string ErrorMessage = 3;
-    string Diagnostics = 4;
-    int64 ServerReceiptTimeUtcTicks = 5;
+    bool succeeded = 1;
+    int32 result = 2;
+    string errorMessage = 3;
+    string diagnostics = 4;
+    int64 serverReceiptTimeUtcTicks = 5;
 }
 
 // PinBulk
 message PinBulkRequest {
-    RequestHeader Header = 1;
-    repeated ContentHashAndHashTypeData Hashes = 2;
+    RequestHeader header = 1;
+    repeated bytes contentHashes = 2;
+}
+
+message PinBulkResponse {
+    map<int32, ResponseHeader> header = 1;
 }
 
 // StoreFile
 message StoreFileRequest {
-    RequestHeader Header = 1;
-    int32 HashType = 2;
-    bytes ContentHash = 3;
-    string Path = 4;
+    RequestHeader header = 1;
+    bytes contentHash = 2;
+    string path = 4;
 
-    Chunk FileContent = 5;
+    Chunk fileContent = 5;
 }
 
 message Chunk {
@@ -56,5 +51,5 @@ message Chunk {
 }
 
 message StoreFileResponse {
-    ResponseHeader Header = 1;
+    ResponseHeader header = 1;
 }

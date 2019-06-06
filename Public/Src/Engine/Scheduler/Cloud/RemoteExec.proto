@@ -4,21 +4,20 @@ package BuildXL.Cloud.Proto;
 
 import "IO.proto";
 import "Process.proto";
-import "RemoteCas.proto";
 
-message BuildRequest {
+// The greeting service definition.
+service RemoteExec {
+    // Sends a greeting
+    rpc ExecProcess (ExecProcessRequest) returns (ExecProcessResponse) {}
+}
+
+message ExecProcessRequest {
     BuildXL.Proto.PathTable pathTable = 1;
     BuildXL.Pips.Proto.Process process = 2;
     map<int32, bytes> inputFiles = 3;
 }
 
-// The greeting service definition.
-service RemoteAgentService {
-    // Sends a greeting
-    rpc RunProcess (BuildRequest) returns (BuildResponse) {}
-}
-
-message BuildResponse {
+message ExecProcessResponse {
     BuildXL.Proto.PathTable pathTable = 1;
     int32 exitCode= 2;
     repeated OutputFile outputFile = 3;
@@ -28,7 +27,7 @@ message BuildResponse {
 message OutputFile {
     BuildXL.Proto.FileArtifact file = 1;
     int64 length = 2;
-    ContentHashAndHashTypeData contentHash = 3;
+    bytes contentHash = 3;
 }
 
 message OutputDirectory {
