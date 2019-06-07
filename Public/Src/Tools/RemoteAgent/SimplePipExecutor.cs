@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using BuildXL.Native.IO;
 using BuildXL.Pips.Operations;
 using BuildXL.Processes;
 using BuildXL.Processes.Containers;
@@ -21,15 +22,17 @@ namespace RemoteAgent
         private ISandboxConfiguration m_sandBoxConfig;
         private PipExecutionContext m_context;
         private LoggingContext m_loggingContext;
+        private string m_localSandboxRoot;
 
-        public SimplePipExecutor(ISandboxConfiguration sandBoxConfig, LoggingContext loggingContext, PipExecutionContext context)
+        public SimplePipExecutor(ISandboxConfiguration sandBoxConfig, LoggingContext loggingContext, PipExecutionContext context, string localSandboxRoot)
         {
             m_sandBoxConfig = sandBoxConfig;
             m_context = context;
             m_loggingContext = loggingContext;
+            m_localSandboxRoot = localSandboxRoot;
         }
 
-        public async Task<SimplePipExecutorResult> ExecuteProcessAsync(Process process, AbsolutePath sandBoxRoot)
+        public async Task<SimplePipExecutorResult> ExecuteProcessAsync(Process process, AbsolutePath localSandboxRoot)
         {
             var fileAccessManifest =
                 new FileAccessManifest(m_context.PathTable, translateDirectories: null) // TODO
@@ -140,7 +143,8 @@ namespace RemoteAgent
             var workingDirectory = process.WorkingDirectory.ToString(m_context.PathTable);
             var rootMappings = new Dictionary<string, string>();
 
-            var environmentVariables = BuildParameters.GetFactory().PopulateFromDictionary(
+            var environmentVariablesDictionary = new Dictionary<string, string>();
+            environmentVariablesDictionary.AddRange(
                 process.EnvironmentVariables.Select(
                     envVar =>
                     {
@@ -148,28 +152,50 @@ namespace RemoteAgent
 
                         if (envVar.IsPassThrough)
                         {
-                            return new KeyValuePair<string,string>(key, Environment.GetEnvironmentVariable(key));
+                            return new KeyValuePair<string, string>(key, Environment.GetEnvironmentVariable(key));
                         }
 
                         var value = envVar.Value.ToString(pipDataRenderer);
                         return new KeyValuePair<string, string>(key, value);
-                    })
-            );
+                    }));
 
+            // Use hopper
+            {
+                environmentVariablesDictionary[global::RemoteAgent.Hopper.Constants.HopperCommand] = executable;
+                executable = Path.Combine(executingAssemblyDirectory, "Hopper", "RemoteAgent.Hopper.exe");
+
+                environmentVariablesDictionary[global::RemoteAgent.Hopper.Constants.HopperWorkingDirectory] = workingDirectory;
+                workingDirectory = executingAssemblyDirectory;
+
+                environmentVariablesDictionary[global::RemoteAgent.Hopper.Constants.HopperWorkingDirectory] = workingDirectory;
+                workingDirectory = executingAssemblyDirectory;
+
+            }
+
+
+            var environmentVariables = BuildParameters.GetFactory().PopulateFromDictionary(environmentVariablesDictionary);
+            
             var containerConfiguration = ContainerConfiguration.DisabledIsolation;
-            if (sandBoxRoot.IsValid)
+            if (localSandboxRoot.IsValid)
             {
                 var redirectedDirectories = new MultiValueDictionary<ExpandedAbsolutePath, ExpandedAbsolutePath>();
                 var originalDirectories = new MultiValueDictionary<AbsolutePath, ExpandedAbsolutePath>();
                 for (var drive = 'B'; drive <= 'F'; drive++)
                 {
+                    if (drive == 'C')
+                    {
+                        continue;
+                    }
                     var originalPathExpanded = new ExpandedAbsolutePath(
                         AbsolutePath.Create(m_context.PathTable, drive + @":\"),
                         m_context.PathTable);
-                    var targetPath = sandBoxRoot.Combine(m_context.PathTable, drive.ToString());
+                    var targetPath = localSandboxRoot.Combine(m_context.PathTable, drive.ToString());
                     var targetPathExpanded = new ExpandedAbsolutePath(
                         targetPath,
                         m_context.PathTable);
+
+                    // TODO: Hanlde erorr
+                    FileUtilities.CreateDirectoryWithRetry(targetPathExpanded.ExpandedPath);
 
                     redirectedDirectories.Add(originalPathExpanded, targetPathExpanded);
                     originalDirectories.Add(targetPath, originalPathExpanded);
@@ -185,7 +211,7 @@ namespace RemoteAgent
               new SandboxedProcessInfo(
                   m_context.PathTable,
                   new SimpleSandboxProcessFileStorage(workingDirectory),
-                  process.Executable.Path.ToString(m_context.PathTable),
+                  executable,
                   fileAccessManifest,
                   true, //m_disableConHostSharing,
                   containerConfiguration,
@@ -200,8 +226,19 @@ namespace RemoteAgent
 
                   // MaxLengthInMemory, TODO: We could let the Process Pip configure this
                   // BufferSize, TODO: We could let the Process Pip configure this
-                  StandardErrorObserver = null, // TODO:
-                  StandardOutputObserver = null, // TODO:
+
+                  StandardOutputEncoding = Encoding.UTF8,
+                  StandardOutputObserver = stdOutStr =>
+                  {
+                      Console.WriteLine("   >>>  " + stdOutStr);
+                  },
+
+                  StandardErrorEncoding = Encoding.UTF8,
+                  StandardErrorObserver = stdErrStr =>
+                  {
+                      Console.WriteLine("   >2>  " + stdErrStr);
+                  },
+
                   RootMappings = rootMappings,
                   EnvironmentVariables = environmentVariables,
                   Timeout = process.Timeout ?? TimeSpan.FromMinutes(10), // TOOD
@@ -221,22 +258,28 @@ namespace RemoteAgent
             return new SimplePipExecutorResult(result, rewrites);
         }
 
-        private static void CreateFolders(PathTable pathTable, Process process)
+        private void CreateFolders(PathTable pathTable, Process process)
         {
-            Directory.CreateDirectory(process.WorkingDirectory.ToString(pathTable));
-
             var foldersToCreate = Enumerable.Union(
                     process.FileOutputs.Select(f => f.Path.GetParent(pathTable)),
                     process.DirectoryOutputs.Select(d => d.Path)
                 )
+                .Append(process.WorkingDirectory)
                 .Distinct()
                 .Select(d => d.ToString(pathTable));
 
             foreach (var folderToCreate in foldersToCreate)
             {
-                Directory.CreateDirectory(folderToCreate);
+                // $TODO: Not the right place to do mapping, needs to generalize
+                var mappedFolderToCreate = Path.Combine(
+                    m_localSandboxRoot,
+                    folderToCreate[0].ToUpperInvariantFast().ToString(),
+                    folderToCreate.Substring(3));
+
+                Console.WriteLine("Prepping: " + mappedFolderToCreate);
+                // $TODO: Handle errros
+                Directory.CreateDirectory(mappedFolderToCreate);
             }
         }
     }
-
 }

@@ -4,7 +4,6 @@
 import * as Managed from "Sdk.Managed";
 
 namespace RemoteAgent {
-
     export declare const qualifier: BuildXLSdk.DefaultQualifier;
 
     @@public
@@ -15,6 +14,8 @@ namespace RemoteAgent {
             ...importFrom("BuildXL.Engine").Scheduler.protoFiles,
         ],
         references: [
+            RemoteAgent.Hopper.exe,
+
             importFrom("BuildXL.Cache.ContentStore").Hashing.dll,
             importFrom("BuildXL.Cache.ContentStore").Interfaces.dll,
             importFrom("BuildXL.Cache.ContentStore").Library.dll,
@@ -31,5 +32,16 @@ namespace RemoteAgent {
             importFrom("Grpc.Core").pkg,
             importFrom("System.Interactive.Async").pkg,
         ],
+        runtimeContent: [
+            {
+                subfolder: "Hopper",
+                contents: [
+                    RemoteAgent.Hopper.withQualifier({
+                        configuration:qualifier.configuration, 
+                        targetFramework: 'net472', 
+                        targetRuntime: qualifier.targetRuntime}).exe,
+                ],
+            }
+        ]
     });
 }

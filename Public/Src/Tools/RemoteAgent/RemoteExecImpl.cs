@@ -70,12 +70,12 @@ namespace RemoteAgent
                 foreach (var inputFile in request.InputFiles)
                 {
                     var clientTargetPath = protoContext.PathFromProto(inputFile.Key).ToString(context.PathTable);
-                    // TODO: Mac/Unix file paths support, this code assumes aboslute path for now
+                    // TODO: Mac/Unix file paths support, this code assumes absolute path for now
                     var sandBoxedPath = Path.Combine(
-                        m_sandboxRoot,
+                        localSandBox,
                         clientTargetPath[0].ToUpperInvariantFast().ToString(),
                         clientTargetPath.Substring(3));
-
+                    
                     hashesWithPaths.Add(
                         new ContentHashWithPath(
                             inputFile.Value.ToContentHash(),
@@ -102,7 +102,7 @@ namespace RemoteAgent
 
                 Console.WriteLine("Invoking");
 
-                var executor = new SimplePipExecutor(m_configuration, loggingContext, context);
+                var executor = new SimplePipExecutor(m_configuration, loggingContext, context, localSandBox);
                 var result = await executor.ExecuteProcessAsync(process, AbsolutePath.Create(context.PathTable, localSandBox));
 
                 var response = new ExecProcessResponse() {ExitCode = result.ExitCode,};

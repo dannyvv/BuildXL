@@ -456,6 +456,8 @@ namespace BuildXL.Processes.Internal
                             m_job.StartContainerIfPresent();
                         }
 
+Console.WriteLine("Starting detoured process");
+
                         // The call to the CreateDetouredProcess below will add a newly created process to the job.
                         System.Diagnostics.Stopwatch m_startUpTimeWatch = System.Diagnostics.Stopwatch.StartNew();
                         var detouredProcessCreationStatus =
