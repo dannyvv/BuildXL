@@ -266,10 +266,5 @@ namespace BuildXL.FrontEnd.Workspaces.Core
         {
             return Descriptor.GetHashCode();
         }
-
-        public void Serialize(BuildXLWriter writer)
-        {
-
-        }
     }
 }

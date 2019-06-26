@@ -350,7 +350,7 @@ namespace BuildXL.FrontEnd.Script
                 : ModuleResolutionResult.CreateFailure();
         }
 
-        private static Dictionary<AbsolutePath, Package> GetSpecPathToPackageMap(ConcurrentDictionary<PackageId, Package> packages)
+        private static Dictionary<AbsolutePath, ModuleDefinition> GetSpecPathToPackageMap(ConcurrentDictionary<PackageId, Package> packages)
         {
             var result = new Dictionary<AbsolutePath, Package>();
             foreach (var kvp in packages)

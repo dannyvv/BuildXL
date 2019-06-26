@@ -152,7 +152,7 @@ namespace BuildXL.FrontEnd.Script.Values
         /// Null for <see cref="GlobalModuleLiteral"/> or not-null for other kind of module literals.
         /// </remarks>
         [CanBeNull]
-        public abstract ModuleDefinition Module{ get; }
+        public abstract ModuleDescriptor Module { get; }
 
         /// <summary>
         /// Checks if this module literal is empty.
@@ -197,7 +197,7 @@ namespace BuildXL.FrontEnd.Script.Values
         /// <remarks>
         /// This factory should only be used during parsing.
         /// </remarks>
-        public static FileModuleLiteral CreateFileModule(AbsolutePath path, IModuleRegistry moduleRegistry, ModuleDefinition module, LineMap lineMap)
+        public static FileModuleLiteral CreateFileModule(AbsolutePath path, IModuleRegistry moduleRegistry, ModuleDescriptor module, LineMap lineMap)
         {
             Contract.Requires(path.IsValid);
             Contract.Requires(moduleRegistry != null);
@@ -214,7 +214,7 @@ namespace BuildXL.FrontEnd.Script.Values
         /// <remarks>
         /// This factory should only be used during parsing.
         /// </remarks>
-        public static FileModuleLiteral CreateFileModule(AbsolutePath path, GlobalModuleLiteral globalScope, ModuleDefinition module, ModuleRegistry moduleRegistry, LineMap lineMap)
+        public static FileModuleLiteral CreateFileModule(AbsolutePath path, GlobalModuleLiteral globalScope, ModuleDescriptor module, ModuleRegistry moduleRegistry, LineMap lineMap)
         {
             Contract.Requires(path.IsValid);
             Contract.Requires(globalScope != null);
@@ -230,7 +230,7 @@ namespace BuildXL.FrontEnd.Script.Values
         /// <remarks>
         /// The outer scope is typically the global module.
         /// </remarks>
-        protected static FileModuleLiteral CreateInstantiatedFileModule(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral globalScope, ModuleDefinition module, ModuleRegistry moduleRegistry, LineMap lineMap)
+        protected static FileModuleLiteral CreateInstantiatedFileModule(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral globalScope, ModuleDescriptor module, ModuleRegistry moduleRegistry, LineMap lineMap)
         {
             return new FileModuleLiteral(path, qualifier, globalScope, module, moduleRegistry, lineMap);
         }

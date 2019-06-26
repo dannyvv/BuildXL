@@ -67,7 +67,7 @@ namespace BuildXL.FrontEnd.Script.Values
         public LineMap LineMap { get; }
 
         /// <inheritdoc/>
-        public override ModuleDefinition Module { get; }
+        public override ModuleDescriptor Module { get; }
 
         /// <summary>
         /// 'this' is a valid file module in this case.
@@ -78,7 +78,7 @@ namespace BuildXL.FrontEnd.Script.Values
         public override SyntaxKind Kind => SyntaxKind.FileModuleLiteral;
 
         /// <nodoc/>
-        internal FileModuleLiteral(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral outerScope, ModuleDefinition module, ModuleRegistry moduleRegistry, LineMap lineMap)
+        internal FileModuleLiteral(AbsolutePath path, QualifierValue qualifier, GlobalModuleLiteral outerScope, ModuleDescriptor module, ModuleRegistry moduleRegistry, LineMap lineMap)
             : this(ModuleLiteralId.Create(path), qualifier, outerScope, module, lineMap)
         {
             Contract.Requires(path.IsValid);
@@ -88,7 +88,7 @@ namespace BuildXL.FrontEnd.Script.Values
         }
 
         /// <nodoc/>
-        internal FileModuleLiteral(ModuleLiteralId id, QualifierValue qualifier, GlobalModuleLiteral outerScope, ModuleDefinition module, LineMap lineMap)
+        internal FileModuleLiteral(ModuleLiteralId id, QualifierValue qualifier, GlobalModuleLiteral outerScope, ModuleDescriptor module, LineMap lineMap)
             : base(id, qualifier, outerScope, location: default(LineInfo))
         {
             Contract.Requires(id.Path.IsValid);
@@ -101,7 +101,7 @@ namespace BuildXL.FrontEnd.Script.Values
         }
 
         /// <nodoc />
-        private FileModuleLiteral(BuildXLReader reader, PathTable pathTable, AbsolutePath path, ModuleDefinition module, GlobalModuleLiteral outerScope, ModuleRegistry moduleRegistry, LineMap lineMap)
+        private FileModuleLiteral(BuildXLReader reader, PathTable pathTable, AbsolutePath path, ModuleDescriptor module, GlobalModuleLiteral outerScope, ModuleRegistry moduleRegistry, LineMap lineMap)
             : this(path, QualifierValue.Unqualified, outerScope, module, moduleRegistry, lineMap)
         {
             var context = new DeserializationContext(this, reader, pathTable, lineMap);
@@ -132,7 +132,7 @@ namespace BuildXL.FrontEnd.Script.Values
                 reader,
                 pathTable,
                 path: reader.ReadAbsolutePath(),
-                module: ModuleDefinition.Deserialize(reader, pathTable),
+                module: ModuleDescriptor.Deserialize(reader, pathTable),
                 outerScope: outerScope, 
                 moduleRegistry: moduleRegistry, 
                 lineMap: lineMap)

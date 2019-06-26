@@ -163,26 +163,26 @@ namespace BuildXL.FrontEnd.Script
             return await DoTryEvaluateModuleAsync(scheduler, moduleDefinition, qualifierId);
         }
 
-        /// <summary>
-        /// An alternative to <see cref="InitResolverAsync(IResolverSettings, object)"/> used for testing.
-        /// Instead of taking and parsing a config object, this method directly takes a list of owned packages.
-        /// </summary>
-        internal void InitResolverForTesting(string name, IEnumerable<Package> packages)
-        {
-            Contract.Assert(m_resolverState == State.Created);
-            Name = name;
-            m_resolverState = State.ResolverInitializing;
+        // /// <summary>
+        // /// An alternative to <see cref="InitResolverAsync(IResolverSettings, object)"/> used for testing.
+        // /// Instead of taking and parsing a config object, this method directly takes a list of owned packages.
+        // /// </summary>
+        // internal void InitResolverForTesting(string name, IEnumerable<Package> packages)
+        // {
+        //     Contract.Assert(m_resolverState == State.Created);
+        //     Name = name;
+        //     m_resolverState = State.ResolverInitializing;
 
-            m_packages = new ConcurrentDictionary<PackageId, Package>();
-            m_owningModules = new Dictionary<ModuleId, Package>();
-            foreach (var package in packages)
-            {
-                m_packages.Add(package.Id, package);
-                m_owningModules.Add(package.ModuleId, package);
-            }
+        //     m_packages = new ConcurrentDictionary<PackageId, Package>();
+        //     m_owningModules = new Dictionary<ModuleId, Package>();
+        //     foreach (var package in packages)
+        //     {
+        //         m_packages.Add(package.Id, package);
+        //         m_owningModules.Add(package.ModuleId, package);
+        //     }
 
-            m_resolverState = State.ResolverInitialized;
-        }
+        //     m_resolverState = State.ResolverInitialized;
+        // }
 
         private async Task<bool> DoTryEvaluateModuleAsync(IEvaluationScheduler scheduler, ModuleDefinition module, QualifierId qualifierId)
         {

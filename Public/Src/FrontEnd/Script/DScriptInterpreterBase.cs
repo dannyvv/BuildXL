@@ -306,21 +306,6 @@ namespace BuildXL.FrontEnd.Script
         }
 
         /// <nodoc/>
-        protected Package CreateDummyPackageFromPath(AbsolutePath path)
-        {
-            Contract.Requires(path.IsValid);
-
-            var pathStr = path.ToString(Context.PathTable);
-            var id = PackageId.Create(StringId.Create(Context.StringTable, pathStr));
-            var desc = new PackageDescriptor
-            {
-                Name = path.ToString(Context.PathTable),
-            };
-
-            return Package.Create(id, path, desc);
-        }
-
-        /// <nodoc/>
         public string GetConversionExceptionMessage(AbsolutePath path, ConversionException exception)
         {
             var arrayLiteral = exception.ErrorContext.ObjectCtx as ArrayLiteral;
