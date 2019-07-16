@@ -45,6 +45,11 @@ namespace BuildXL
         private readonly string m_logsDirectory;
 
         /// <summary>
+        /// Wheter the console output should be optimized for Azure devops output
+        /// </summary>
+        private readonly bool m_optimizeForAzureDevOps;
+
+        /// <summary>
         /// Creates a new instance with optional colorization.
         /// </summary>
         /// <param name="eventSource">
@@ -89,6 +94,9 @@ namespace BuildXL
         /// <param name="maxStatusPips">
         /// Maximum number of concurrently executing pips to render in Fancy Console view.
         /// </param>
+        /// <param name="optimizeForAzureDevOps">
+        /// Whether to transformer the console output to be optimized for Azure DevOps output.
+        /// </param>
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope")]
         public ConsoleEventListener(
             Events eventSource,
@@ -103,7 +111,8 @@ namespace BuildXL
             EventMask eventMask = null,
             DisabledDueToDiskWriteFailureEventHandler onDisabledDueToDiskWriteFailure = null,
             PathTranslator pathTranslator = null,
-            int maxStatusPips = DefaultMaxStatusPips)
+            int maxStatusPips = DefaultMaxStatusPips,
+            bool optimizeForAzureDevOps = false)
             : this(
                 eventSource,
                 new StandardConsole(colorize, animateTaskbar, updatingConsole, pathTranslator),
@@ -114,7 +123,8 @@ namespace BuildXL
                 level: level,
                 eventMask: eventMask,
                 onDisabledDueToDiskWriteFailure: onDisabledDueToDiskWriteFailure,
-                maxStatusPips: maxStatusPips)
+                maxStatusPips: maxStatusPips,
+                optimizeForAzureDevOps: optimizeForAzureDevOps)
         {
         }
 
@@ -156,6 +166,9 @@ namespace BuildXL
         /// <param name="maxStatusPips">
         /// Maximum number of concurrently executing pips to render in Fancy Console view.
         /// </param>
+        /// <param name="optimizeForAzureDevOps">
+        /// Whether to transformer the console output to be optimized for Azure DevOps output.
+        /// </param>
         public ConsoleEventListener(
             Events eventSource,
             IConsole console,
@@ -167,7 +180,8 @@ namespace BuildXL
             EventLevel level = EventLevel.Verbose,
             EventMask eventMask = null,
             DisabledDueToDiskWriteFailureEventHandler onDisabledDueToDiskWriteFailure = null,
-            int maxStatusPips = DefaultMaxStatusPips)
+            int maxStatusPips = DefaultMaxStatusPips,
+            bool optimizeForAzureDevOps = false)
             : base(eventSource, baseTime, warningMapper, level, false, TimeDisplay.Seconds, eventMask, onDisabledDueToDiskWriteFailure, useCustomPipDescription: useCustomPipDescription)
         {
             Contract.Requires(eventSource != null);
@@ -177,6 +191,7 @@ namespace BuildXL
             m_maxStatusPips = maxStatusPips;
             m_logsDirectory = logsDirectory;
             m_notWorker = notWorker;
+            m_optimizeForAzureDevOps = optimizeForAzureDevOps;
         }
 
         /// <inheritdoc />
@@ -317,6 +332,13 @@ namespace BuildXL
                         if (m_notWorker)
                         {
                             m_console.ReportProgress((ulong)done, (ulong)total);
+
+                            if (m_optimizeForAzureDevOps)
+                            {
+                                double processPercent = (100.0 * procsDone) / (procsTotal * 1.0);
+                                int current = Convert.ToInt32(Math.Floor(processPercent));
+                                m_console.WriteOutputLine(MessageLevel.Info, $"##vso[task.setprogress value={current}]Sample indicator");
+                            }
                         }
 
                         break;

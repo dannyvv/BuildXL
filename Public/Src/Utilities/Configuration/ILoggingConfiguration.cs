@@ -308,5 +308,10 @@ namespace BuildXL.Utilities.Configuration
         /// On-the-fly cache miss analysis option
         /// </summary>
         CacheMissAnalysisOption CacheMissAnalysisOption { get; }
+
+        /// <summary>
+        /// Whether to transformer the console output to be optimized for Azure DevOps output.
+        /// </summary>
+        bool OptimizeConsoleOutputForAzureDevOps { get; }
     }
 }

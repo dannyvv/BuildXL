@@ -1356,7 +1356,8 @@ namespace BuildXL
                     m_configuration.ConsoleVerbosity.ToEventLevel(),
                     m_noLogMask,
                     onDisabledDueToDiskWriteFailure: OnListenerDisabledDueToDiskWriteFailure,
-                    maxStatusPips: m_configuration.FancyConsoleMaxStatusPips);
+                    maxStatusPips: m_configuration.FancyConsoleMaxStatusPips,
+                    optimizeForAzureDevOps: m_configuration.OptimizeConsoleOutputForAzureDevOps);
 
                 AddListener(listener);
             }
