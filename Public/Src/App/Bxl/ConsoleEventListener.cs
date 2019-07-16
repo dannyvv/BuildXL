@@ -14,6 +14,7 @@ using System.Threading;
 using BuildXL.Pips;
 using BuildXL.Pips.Operations;
 using BuildXL.Utilities;
+using BuildXL.Utilities.Collections;
 using BuildXL.Utilities.Instrumentation.Common;
 using BuildXL.Utilities.Tracing;
 using BuildXL.Visualization.Models;
@@ -337,7 +338,7 @@ namespace BuildXL
                             {
                                 double processPercent = (100.0 * procsDone) / (procsTotal * 1.0);
                                 int current = Convert.ToInt32(Math.Floor(processPercent));
-                                m_console.WriteOutputLine(MessageLevel.Info, $"##vso[task.setprogress value={current}]Sample indicator");
+                                m_console.WriteOutputLine(MessageLevel.Info, $"##vso[task.setprogress value={current}]Pip Execution phase");
                             }
                         }
 
@@ -404,6 +405,8 @@ namespace BuildXL
         {
             Interlocked.Increment(ref m_errorsLogged);
 
+            TryLogAzureDevOpsIssue(eventData, "error");
+
             if (eventData.EventId == (int)EventId.PipProcessError)
             {
                 // Try to be a bit fancy and only show the tool errors in red. The pip name and log file will stay in
@@ -433,6 +436,8 @@ namespace BuildXL
         /// <inheritdoc />
         protected override void OnWarning(EventWrittenEventArgs eventData)
         {
+            TryLogAzureDevOpsIssue(eventData, "warning");
+
             if (eventData.EventId == (int)EventId.PipProcessWarning)
             {
                 string warnings = (string)eventData.Payload[5];
@@ -448,6 +453,9 @@ namespace BuildXL
                         // Note - the MessageLevel below are really just for the sake of colorization
                         Output(EventLevel.Informational, eventData.EventId, eventData.EventName, eventData.Keywords, message.Substring(0, messageStart).TrimEnd(s_newLineCharArray));
                         Output(EventLevel.Warning, eventData.EventId, eventData.EventName, eventData.Keywords, warnings);
+
+                        TryLogAzureDevOpsIssue(eventData, "warning");
+
                         return;
                     }
                 }
@@ -455,6 +463,63 @@ namespace BuildXL
 
             // We couldn't do the fancy formatting
             base.OnWarning(eventData);
+        }
+
+        private void TryLogAzureDevOpsIssue(EventWrittenEventArgs eventData, string eventType)
+        {
+            if (!m_optimizeForAzureDevOps)
+            {
+                return;
+            }
+
+            var builder = new StringBuilder();
+            builder.Append("##vso[task.logIssue type=");
+            builder.Append(eventType);
+
+            var message = eventData.Message;
+            var args = eventData.Payload == null ? CollectionUtilities.EmptyArray<object>() : eventData.Payload.ToArray();
+            string body;
+
+            if (m_optimizeForAzureDevOps)
+            {
+                // see if this event provides provenance info
+                if (message.StartsWith(EventConstants.ProvenancePrefix, StringComparison.Ordinal))
+                {
+                    Contract.Assume(args.Length >= 3, "Provenance prefix contains 3 formatting tokens.");
+
+                    // this is formatted with local culture
+                    body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
+
+                    // file
+                    builder.Append(";sourcepath=");
+                    builder.Append(args[0]);
+
+                    //line
+                    builder.Append(";linenumber=");
+                    builder.Append(args[1]);
+
+                    //column
+                    builder.Append(";columnnumber=");
+                    builder.Append(args[2]);
+
+                    //code
+                    builder.Append(";code=DX");
+                    builder.Append(eventData.EventId.ToString("D4"));
+                }
+                else
+                {
+                    // this is formatted with local culture
+                    body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
+                }
+
+                builder.Append(";]");
+                // substitute newlines in the message
+                builder.Append(body.Replace('\r', ' ').Replace('\n', ' '));
+
+
+                m_console.WriteOutputLine(MessageLevel.Info, builder.ToString());
+
+            }
         }
 
         private static string FinalizeFormatStringLayout(StringBuilder buffer, string statusLine, long maxNum)
