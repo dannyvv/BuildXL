@@ -51,6 +51,11 @@ namespace BuildXL
         private readonly bool m_optimizeForAzureDevOps;
 
         /// <summary>
+        /// The last reported percentage. To avoid double reporting the same percentage over and over
+        /// </summary>
+        private int m_lastReportedProgress = -1;
+
+        /// <summary>
         /// Creates a new instance with optional colorization.
         /// </summary>
         /// <param name="eventSource">
@@ -337,8 +342,12 @@ namespace BuildXL
                             if (m_optimizeForAzureDevOps)
                             {
                                 double processPercent = (100.0 * procsDone) / (procsTotal * 1.0);
-                                int current = Convert.ToInt32(Math.Floor(processPercent));
-                                m_console.WriteOutputLine(MessageLevel.Info, $"##vso[task.setprogress value={current}]Pip Execution phase");
+                                int currentProgress = Convert.ToInt32(Math.Floor(processPercent));
+                                if (m_lastReportedProgress != currentProgress)
+                                {
+                                    m_lastReportedProgress = currentProgress;
+                                    m_console.WriteOutputLine(MessageLevel.Info, $"##vso[task.setprogress value={currentProgress};]Pip Execution phase");
+                                }
                             }
                         }
 
