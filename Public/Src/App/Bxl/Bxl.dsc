@@ -6,7 +6,7 @@ import * as Managed from "Sdk.Managed";
 import * as Branding from "BuildXL.Branding";
 
 namespace Main {
-    const other = Contract.warn("Custom warning 6");
+    const other = Contract.warn("Custom warning 7");
 
     @@public
     export const exe = BuildXLSdk.executable({
