@@ -493,7 +493,7 @@ namespace BuildXL
                 Contract.Assume(args.Length >= 3, "Provenance prefix contains 3 formatting tokens.");
 
                 // file
-                builders.Append(";sourcepath=");
+                builder.Append(";sourcepath=");
                 builder.Append(args[0]);
 
                 //line
@@ -505,7 +505,7 @@ namespace BuildXL
                 builder.Append(args[2]);
 
                 //code
-                builders.Append(";code=DX");
+                builder.Append(";code=DX");
                 builder.Append(eventData.EventId.ToString("D4"));
             }
             
@@ -516,7 +516,7 @@ namespace BuildXL
             builder.Append(";]");
             // substitute newlines in the message
             const string newLineAlternative = " | ";
-            builders.Append(body.Replace("\r\n", newLineAlternative).Replace("\n", newLineAlternative));
+            builder.Append(body.Replace("\r\n", newLineAlternative).Replace("\n", newLineAlternative));
 
 
             m_console.WriteOutputLine(MessageLevel.Info, builder.ToString());

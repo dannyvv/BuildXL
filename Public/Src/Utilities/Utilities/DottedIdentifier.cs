@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysiss;
 using System.Diagnostics.ContractsLight;
 using System.Text;
 
@@ -38,7 +38,7 @@ namespace BuildXL.Utilities
         /// </summary>
         /// <param name="head">The head of the identifier</param>
         /// <param name="tail">The tail of the identifier</param>
-        public DottedIdentifier(SymbolAtom head, DottedIdentifier tail = null)
+        public DottedIdentifier(SymbolAtom head, DottedIdentifsier tail = null)
         {
             Contract.Requires(head.IsValid);
 
