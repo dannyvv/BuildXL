@@ -463,8 +463,6 @@ namespace BuildXL
                         Output(EventLevel.Informational, eventData.EventId, eventData.EventName, eventData.Keywords, message.Substring(0, messageStart).TrimEnd(s_newLineCharArray));
                         Output(EventLevel.Warning, eventData.EventId, eventData.EventName, eventData.Keywords, warnings);
 
-                        TryLogAzureDevOpsIssue(eventData, "warning");
-
                         return;
                     }
                 }
@@ -489,46 +487,42 @@ namespace BuildXL
             var args = eventData.Payload == null ? CollectionUtilities.EmptyArray<object>() : eventData.Payload.ToArray();
             string body;
 
-            if (m_optimizeForAzureDevOps)
+            // see if this event provides provenance info
+            if (message.StartsWith(EventConstants.ProvenancePrefix, StringComparison.Ordinal))
             {
-                // see if this event provides provenance info
-                if (message.StartsWith(EventConstants.ProvenancePrefix, StringComparison.Ordinal))
-                {
-                    Contract.Assume(args.Length >= 3, "Provenance prefix contains 3 formatting tokens.");
+                Contract.Assume(args.Length >= 3, "Provenance prefix contains 3 formatting tokens.");
 
-                    // this is formatted with local culture
-                    body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
+                // this is formatted with local culture
+                body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
 
-                    // file
-                    builder.Append(";sourcepath=");
-                    builder.Append(args[0]);
+                // file
+                builder.Append(";sourcepath=");
+                builder.Append(args[0]);
 
-                    //line
-                    builder.Append(";linenumber=");
-                    builder.Append(args[1]);
+                //line
+                builder.Append(";linenumber=");
+                builder.Append(args[1]);
 
-                    //column
-                    builder.Append(";columnnumber=");
-                    builder.Append(args[2]);
+                //column
+                builder.Append(";columnnumber=");
+                builder.Append(args[2]);
 
-                    //code
-                    builder.Append(";code=DX");
-                    builder.Append(eventData.EventId.ToString("D4"));
-                }
-                else
-                {
-                    // this is formatted with local culture
-                    body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
-                }
-
-                builder.Append(";]");
-                // substitute newlines in the message
-                builder.Append(body.Replace('\r', ' ').Replace('\n', ' '));
-
-
-                m_console.WriteOutputLine(MessageLevel.Info, builder.ToString());
-
+                //code
+                builder.Append(";code=DX");
+                builder.Append(eventData.EventId.ToString("D4"));
             }
+            else
+            {
+                // this is formatted with local culture
+                body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
+            }
+
+            builder.Append(";]");
+            // substitute newlines in the message
+            builder.Append(body.Replace('\r', ' ').Replace('\n', ' '));
+
+
+            m_console.WriteOutputLine(MessageLevel.Info, builder.ToString());
         }
 
         private static string FinalizeFormatStringLayout(StringBuilder buffer, string statusLine, long maxNum)
@@ -578,7 +572,23 @@ namespace BuildXL
         /// <inheritdoc />
         protected override void Output(EventLevel level, int id, string eventName, EventKeywords eventKeywords, string text, bool doNotTranslatePaths = false)
         {
-            m_console.WriteOutputLine(ConvertLevel(level), text.TrimEnd(s_newLineCharArray));
+            var outputText = text.TrimEnd(s_newLineCharArray);
+
+            if (m_optimizeForAzureDevOps)
+            {
+                switch  (level)
+                {
+                    case EventLevel.Critical:
+                    case EventLevel.Error:
+                        outputText = "##[error]" + outputText;
+                        break;
+                    case EventLevel.Warning:
+                        outputText = "##[warning]" + outputText;
+                        break;
+                }
+            }
+
+            m_console.WriteOutputLine(ConvertLevel(level), outputText);
         }
 
         private void OutputUpdatable(EventLevel level, string standardText, string updatableText, bool onlyIfOverwriteIsSupported)
