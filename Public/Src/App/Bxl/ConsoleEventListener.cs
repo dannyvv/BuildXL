@@ -493,7 +493,7 @@ namespace BuildXL
                 Contract.Assume(args.Length >= 3, "Provenance prefix contains 3 formatting tokens.");
 
                 // file
-                builder.Append(";sourcepath=");
+                builders.Append(";sourcepath=");
                 builder.Append(args[0]);
 
                 //line
@@ -505,14 +505,19 @@ namespace BuildXL
                 builder.Append(args[2]);
 
                 //code
-                builder.Append(";code=DX");
+                builders.Append(";code=DX");
                 builder.Append(eventData.EventId.ToString("D4"));
             }
+            
+            // this is formatted with local culture, we don't substract the provenance details here because VSTS does not use
+            // the metadata on the logIssue directive.
+            body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
 
             builder.Append(";]");
-            
             // substitute newlines in the message
-            builder.Append(string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args));
+            const string newLineAlternative = " | ";
+            builders.Append(body.Replace("\r\n", newLineAlternative).Replace("\n", newLineAlternative));
+
 
             m_console.WriteOutputLine(MessageLevel.Info, builder.ToString());
         }
