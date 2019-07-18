@@ -492,9 +492,6 @@ namespace BuildXL
             {
                 Contract.Assume(args.Length >= 3, "Provenance prefix contains 3 formatting tokens.");
 
-                // this is formatted with local culture
-                body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
-
                 // file
                 builder.Append(";sourcepath=");
                 builder.Append(args[0]);
@@ -511,16 +508,11 @@ namespace BuildXL
                 builder.Append(";code=DX");
                 builder.Append(eventData.EventId.ToString("D4"));
             }
-            else
-            {
-                // this is formatted with local culture
-                body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
-            }
 
             builder.Append(";]");
+            
             // substitute newlines in the message
-            builder.Append(body.Replace('\r', ' ').Replace('\n', ' '));
-
+            builder.Append(string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args));
 
             m_console.WriteOutputLine(MessageLevel.Info, builder.ToString());
         }
