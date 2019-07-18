@@ -6,7 +6,7 @@ import * as Managed from "Sdk.Managed";
 import * as Branding from "BuildXL.Branding";
 
 namespace Main {
-    const other = Contract.fail("Custom error 8");
+    const other = Contract.fail("Custom error 9");
 
     @@public
     export const exe = BuildXLSdk.executable({

@@ -580,10 +580,10 @@ namespace BuildXL
                 {
                     case EventLevel.Critical:
                     case EventLevel.Error:
-                        outputText = "##[error]" + outputText;
+                        outputText = "##[error]" + outputText.Replace("\n", "\n##[error]");
                         break;
                     case EventLevel.Warning:
-                        outputText = "##[warning]" + outputText;
+                        outputText = "##[warning]" + outputText.Replace("\n", "\n##[warning]");
                         break;
                 }
             }
