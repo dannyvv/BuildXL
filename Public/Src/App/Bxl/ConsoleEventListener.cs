@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -509,13 +509,13 @@ namespace BuildXL
                 builder.Append(eventData.EventId.ToString("D4"));
             }
             
-            // this is formatted with local culture, we don't substract the provenance details here because VSTS does not use
-            // the metadata on the logIssue directive.
-            body = string.Format(CultureInfo.CurrentCulture, message.Substring(EventConstants.ProvenancePrefix.Length), args);
+            // report the entire message since Azure DevOps does not yet provide actionalbe information from the metadata.
+            body = string.Format(CultureInfo.CurrentCulture, message, args);
 
             builder.Append(";]");
+
             // substitute newlines in the message
-            const string newLineAlternative = " | ";
+            const string newLineAlternative = " ### ";
             builder.Append(body.Replace("\r\n", newLineAlternative).Replace("\n", newLineAlternative));
 
 

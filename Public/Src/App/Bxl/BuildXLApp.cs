@@ -1989,6 +1989,12 @@ namespace BuildXL
                 PathTranslator.CreateIfEnabled(loggingConfiguration.SubstTarget, loggingConfiguration.SubstSource, pathTable, out translator);
             }
 
+            if (loggingConfiguration.OptimizeConsoleOutputForAzureDevOps)
+            {
+                // Use a very simple logger for azure devops
+                return new StandardConsole(colorize: false, animateTaskbar: false, supportsOverwriting: false, pathTranslator: translator);
+            }
+
             return new StandardConsole(loggingConfiguration.Color, loggingConfiguration.AnimateTaskbar, loggingConfiguration.FancyConsole, translator);
         }
 

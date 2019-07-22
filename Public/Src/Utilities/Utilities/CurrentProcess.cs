@@ -22,7 +22,7 @@ namespace BuildXL.Utilities
         /// <returns>The command line for this process</returns>
         public static string GetCommandLine()
         {
-            return Environment.CommansdLine;
+            return Environment.CommandLine;
         }
     }
 }

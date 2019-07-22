@@ -53,7 +53,7 @@ namespace BuildXL.Utilities
             Contract.Requires(!debug || logStats, "Debug mode requires logstats mode");
 
             m_debug = debug;
-            m_logStatss = logStats;
+            m_logStats = logStats;
         }
 
         /// <summary>
