@@ -27,6 +27,10 @@ namespace NugetPackages {
             targetFramework: "net472",
             targetRuntime: "win-x64"
         }).deployment,
+        deploymentOptions: {
+            skipPdb: true,
+            skipXml: true,
+        }
     });
 
     const winX64 = !canBuildAllPackagesOnThisHost ? undefined : pack({
@@ -139,7 +143,13 @@ namespace NugetPackages {
         targetLocation: packageTargetFolder,
     });
 
-    export function pack(args: {id: string, deployment: Deployment.Definition, copyContentFiles?: boolean, dependencies?: (Nuget.Dependency | Managed.ManagedNugetPackage)[]}) : File {
+    export function pack(args: {
+        id: string, 
+        deployment: Deployment.Definition, 
+        deploymentOptions?: Managed.Deployment.FlattenOptions,
+        copyContentFiles?: boolean, 
+        dependencies?: (Nuget.Dependency | Managed.ManagedNugetPackage)[]
+    }) : File {
         const dependencies : Nuget.Dependency[] = (args.dependencies || [])
             .map(dep => {
                 if (isManagedPackage(dep)) {
@@ -168,6 +178,7 @@ namespace NugetPackages {
                     : undefined,
             },
             deployment: args.deployment,
+            deploymentOptions: args.deploymentOptions,
             noPackageAnalysis: true,
             noDefaultExcludes: true,
         }).nuPkg;
