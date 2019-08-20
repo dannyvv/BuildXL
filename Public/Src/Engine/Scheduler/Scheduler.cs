@@ -1433,7 +1433,7 @@ namespace BuildXL.Scheduler
         /// This is called after all pips have been added and the pip queue has emptied.
         /// Warning: Some variables may be null if scheduler's Init() is not called.
         /// </remarks>
-        public SchedulerPerformanceInfo LogStats(LoggingContext loggingContext)
+        public SchedulerPerformanceInfo LogStats(LoggingContext loggingContext, BuildSummaryWriter buildSummaryWriter)
         {
             Dictionary<string, long> statistics = new Dictionary<string, long>();
             lock (m_statusLock)
@@ -1444,7 +1444,7 @@ namespace BuildXL.Scheduler
 
                 OperationTracker.Stop(Context, m_configuration.Logging, PipExecutionCounters, Worker.WorkerStatusOperationKinds);
 
-                LogCriticalPath(statistics);
+                LogCriticalPath(statistics, buildSummaryWriter);
 
                 int processPipsStartOrShutdownService = m_serviceManager.TotalServicePipsCompleted + m_serviceManager.TotalServiceShutdownPipsCompleted;
 
@@ -1512,6 +1512,9 @@ namespace BuildXL.Scheduler
 
                 var statsName = "PipStats.{0}_{1}";
 
+                buildSummaryWriter?.StartDetailedTableSummary("Pips", $"Succeeded: {succeededCount}, Failed: {m_pipTypesToLogCountersSnapshot[PipState.Failed]}");
+                buildSummaryWriter?.StartTable("Type", "Done", "Failed", "Skipped", "Ignored", "Total");
+                
                 // Log the stats for each pipType.
                 foreach (var pipType in Enum.GetValues(typeof(PipType)).Cast<PipType>())
                 {
@@ -1536,7 +1539,12 @@ namespace BuildXL.Scheduler
                     statistics.Add(string.Format(statsName, pipType, "Skipped"), detailedSnapShot.SkippedDueToFailedDependenciesCount);
                     statistics.Add(string.Format(statsName, pipType, "Ignored"), detailedSnapShot.IgnoredCount);
                     statistics.Add(string.Format(statsName, pipType, "Total"), detailedSnapShot.Total);
+
+                    buildSummaryWriter?.WriteTableRow(pipType.ToString(), detailedSnapShot.DoneCount, detailedSnapShot[PipState.Failed], detailedSnapShot.SkippedDueToFailedDependenciesCount, detailedSnapShot.IgnoredCount, detailedSnapShot.Total);
                 }
+
+                buildSummaryWriter?.EndTable();
+                buildSummaryWriter?.EndDetailedTableSummary();
 
                 Logger.Log.ProcessesCacheMissStats(loggingContext, m_numProcessPipsUnsatisfiedFromCache);
                 Logger.Log.ProcessesCacheHitStats(loggingContext, m_numProcessPipsSatisfiedFromCache);
@@ -4205,7 +4213,7 @@ namespace BuildXL.Scheduler
 
         #region Critical Path Logging
 
-        private void LogCriticalPath(Dictionary<string, long> statistics)
+        private void LogCriticalPath(Dictionary<string, long> statistics, BuildSummaryWriter buildSummaryWriter)
         {
             int currentCriticalPathTailPipIdValue;
             PipRuntimeInfo criticalPathRuntimeInfo;
@@ -4256,6 +4264,7 @@ namespace BuildXL.Scheduler
                 long totalCacheMissAnalysisDuration = 0;
 
                 var summaryTable = new StringBuilder();
+                var summaryRows = buildSummaryWriter == null ? null : new List<object[]>();
                 var detailedLog = new StringBuilder();
                 detailedLog.AppendLine(I($"Fine-grained Duration (ms) for Each Pip on the Critical Path (from end to beginning)"));
 
@@ -4299,6 +4308,10 @@ namespace BuildXL.Scheduler
                     }
 
                     summaryTable.AppendLine(I($"{pipDurationMs,16} | {runtimeInfo.ProcessExecuteTimeMs,15} | {pipQueueDurationMs,18} | {runtimeInfo.Result,12} | {scheduledTime,14} | {completedTime,14} | {pip.GetDescription(Context)}"));
+                    if (summaryRows != null)
+                    {
+                        summaryRows.Add(new object[]{pipDurationMs, runtimeInfo.ProcessExecuteTimeMs, pipQueueDurationMs, runtimeInfo.Result, scheduledTime, completedTime, pip.GetDescription(Context)});
+                    }
 
                     totalStepDurations = totalStepDurations.Zip(performance.StepDurations, (x, y) => (x + (long)y.TotalMilliseconds)).ToList();
                     totalMasterQueueDurations = totalMasterQueueDurations.Zip(performance.QueueDurations.Value, (x, y) => (x + (long)y.TotalMilliseconds)).ToList();
@@ -4325,6 +4338,7 @@ namespace BuildXL.Scheduler
                 long totalChooseWorker = totalStepDurations[(int)PipExecutionStep.ChooseWorkerCpu] + totalStepDurations[(int)PipExecutionStep.ChooseWorkerCacheLookup];
 
                 builder.AppendLine(I($"{totalCriticalPathRunningTime,16} | {exeDurationCriticalPathMs,15} | {totalMasterQueueTime,18} | {string.Empty,12} | {string.Empty,14} | {string.Empty,14} | *Total"));
+
                 builder.AppendLine(summaryTable.ToString());
 
                 builder.AppendLine(detailedLog.ToString());
@@ -4461,6 +4475,45 @@ namespace BuildXL.Scheduler
                 }
 
                 Logger.Log.CriticalPathChain(m_executePhaseLoggingContext, builder.ToString());
+
+                if (buildSummaryWriter != null)
+                {
+                    buildSummaryWriter.StartDetailedTableSummary(
+                        "Critical path",
+                        $"Pip Duration: {totalCriticalPathRunningTime}ms, Exe Duration: {exeDurationCriticalPathMs}ms");
+                    buildSummaryWriter.StartTable(
+                        "Pip Duration(ms)",
+                        "Exe Duration(ms)",
+                        "Queue Duration(ms)",
+                        "Pip Result",
+                        "Scheduled Time",
+                        "Completed Time",
+                        "Pip");
+                    buildSummaryWriter.WriteTableRow(
+                        totalCriticalPathRunningTime,
+                        exeDurationCriticalPathMs,
+                        totalMasterQueueTime,
+                        string.Empty,
+                        string.Empty,
+                        string.Empty,
+                        "*Total");
+                    buildSummaryWriter.WriteTableRow(
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-");
+                    foreach (var summaryRow in summaryRows)
+                    {
+                        buildSummaryWriter.WriteTableRow(summaryRow);
+                    }
+
+                    buildSummaryWriter.EndTable();
+                    buildSummaryWriter.EndDetailedTableSummary();
+                }
+
             }
         }
 

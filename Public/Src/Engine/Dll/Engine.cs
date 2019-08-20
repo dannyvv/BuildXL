@@ -3005,7 +3005,18 @@ namespace BuildXL.Engine
                 && constructScheduleResult != ConstructScheduleResult.Failure
                 && constructScheduleResult != ConstructScheduleResult.None)
             {
-                m_enginePerformanceInfo.SchedulerPerformanceInfo = schedule.LogStats(loggingContext);
+                var buildSummaryWriter = Configuration.Logging.OptimizeConsoleOutputForAzureDevOps
+                    ? new BuildSummaryWriter()
+                    : null;
+
+                if (buildSummaryWriter != null)
+                {
+                    buildSummaryWriter.WriteHeader("Stats");
+                }
+
+                m_enginePerformanceInfo.SchedulerPerformanceInfo = schedule.LogStats(loggingContext, buildSummaryWriter);
+
+                buildSummaryWriter.write
             }
 
             foreach (var type in BuildXLWriterStats.Types.OrderByDescending(type => BuildXLWriterStats.GetBytes(type)))
