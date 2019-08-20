@@ -9,6 +9,7 @@ using BuildXL.FrontEnd.Script.Evaluator;
 using BuildXL.FrontEnd.Script.Tracing;
 using BuildXL.FrontEnd.Script.Values;
 using BuildXL.FrontEnd.Sdk;
+using BuildXL.FrontEnd.Workspaces;
 using BuildXL.Utilities.Configuration;
 
 namespace BuildXL.FrontEnd.Nuget
@@ -16,8 +17,14 @@ namespace BuildXL.FrontEnd.Nuget
     /// <summary>
     /// NuGet resolver frontend
     /// </summary>
-    public sealed class NugetFrontEnd : DScriptInterpreterBase, IFrontEnd
+    public sealed class NugetFrontEnd : IFrontEnd
     {
+        /// <nodoc />
+        public const string Name = nameof(NugetFrontEnd);
+
+        private FrontEndContext m_context;
+        private FrontEndHost m_host;
+
         private readonly IDecorator<EvaluationResult> m_evaluationDecorator;
         private SourceFileProcessingQueue<bool> m_sourceFileProcessingQueue;
 
@@ -26,10 +33,7 @@ namespace BuildXL.FrontEnd.Nuget
             IFrontEndStatistics statistics,
             Logger logger = null,
             IDecorator<EvaluationResult> evaluationDecorator = null)
-            : base(statistics, logger)
         {
-            Name = nameof(NugetFrontEnd);
-
             m_evaluationDecorator = evaluationDecorator;
         }
 
@@ -43,15 +47,12 @@ namespace BuildXL.FrontEnd.Nuget
             Contract.Requires(context != null);
             Contract.Requires(configuration != null);
 
-            InitializeInterpreter(host, context, configuration);
         }
 
-        /// <inheritdoc />
-        public override void InitializeInterpreter(FrontEndHost host, FrontEndContext context, IConfiguration configuration)
-        {
-            base.InitializeInterpreter(host, context, configuration);
 
-            m_sourceFileProcessingQueue = new SourceFileProcessingQueue<bool>(configuration.FrontEnd.MaxFrontEndConcurrency());
+        public IWorkspaceModuleResolver CreateWorkspaceResolver(string kind)
+        {
+            return new WorkspaceNugetModuleResolver(m_context.StringTable, null);
         }
 
         /// <nodoc/>
@@ -61,9 +62,9 @@ namespace BuildXL.FrontEnd.Nuget
             Contract.Assert(m_sourceFileProcessingQueue != null, "Initialize method should be called to initialize m_sourceFileProcessingQueue.");
 
             return new NugetResolver(
-                FrontEndHost,
-                Context,
-                Configuration,
+                m_host,
+                m_context,
+                m_configuration,
                 FrontEndStatistics,
                 m_sourceFileProcessingQueue,
                 Logger,

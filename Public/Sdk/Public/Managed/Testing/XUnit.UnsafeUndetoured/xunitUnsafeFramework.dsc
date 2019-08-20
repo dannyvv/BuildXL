@@ -1,3 +1,22 @@
+// import strings are more darker
+import * as Manged from "Sdk.Managed";
+const test = importFrom("Sdk.Managed").test;
+
+// qualifier keyword more pronounced
+export declare const qualifier : Managed.TargetFrameworks.All;
+
+// normal strings and format strings untouched
+const strValue = "someString";
+const format = `regular ${strValue} format`;
+
+// file, path literals ligher and path separator clearly visible.
+const directory = d`some/folder`;
+const file = f`regular/folder/file.txt`;
+const parameterizedFile = f`some/${strValue}/subfolder/file.txt`;
+
+
+
+
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -7,7 +26,12 @@ import * as XUnit        from "Sdk.Managed.Testing.XUnit";
 import * as Managed      from "Sdk.Managed";
 import * as Deployment   from "Sdk.Deployment";
 
-export declare const qualifier : Managed.TargetFrameworks.All;
+//export declare const qualifier : Managed.TargetFrameworks.All;
+
+const color = "red";
+const fake = f`somest/folder${color}uff`;
+const other = "hello";
+const blaat = `sometihg${color}`;
 
 // This framework wraps the regular xunit framework but does not run the xunit test under the Detours sandbox.
 // This one is highly unsafe and should only be used for tests that need to test things that don't work under

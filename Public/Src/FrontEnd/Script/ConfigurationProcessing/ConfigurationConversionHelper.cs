@@ -135,7 +135,7 @@ namespace BuildXL.FrontEnd.Script
         /// <summary>
         /// Parses, validates, and converts a given configuration file for the purpose of getting the configuration object.
         /// </summary>
-        public async Task<ConfigConversionResult> ParseValidateAndConvertConfigFileAsync(AbsolutePath configPath)
+        public async Task<ConfigConversionResult> ParseValidateAndConvertConfigFileAsync(AbsolutePath configPath, ILoadCon)
         {
             var configStatistics = FrontEndStatistics.LoadConfigStatistics;
             using (configStatistics.TotalDuration.Start())
